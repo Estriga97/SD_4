@@ -19,14 +19,14 @@
 #include "network_client-private.h"
 #include "message-private.h"
 #include "table_skel-private.h"
+#include "primary_backup.h"
 
 #define SOCKETS_NUMBER 6
 
 static int quit = 0;
 static int nTables;
+static int t_server;
 
-
-  
 void shift(struct pollfd* connects, int i) {
   
   if(connects == NULL || i < 0){
@@ -55,7 +55,6 @@ void shift(struct pollfd* connects, int i) {
   }
 
 }
-
 
 int make_server_socket(short port){
 
@@ -223,7 +222,15 @@ void quitFunc (){
 
 int main(int argc, char **argv){
 
-  if (argc < 3){
+  if(argc > 2) {
+    t_server = 1;
+  }
+
+  else if(argc = 2) {
+    t_server = 0;
+  }
+
+  else { // alguem nao sabe chamar a merda dos servidores (estriga?)
     printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
     printf("Exemplo de uso: ./server 54321 10 15 20 25\n");
     return -1;
@@ -231,6 +238,7 @@ int main(int argc, char **argv){
 
   int listening_socket,i;
   char ** lista_tabelas;
+
   if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) {
     fprintf(stderr, "Erro ao preparar lista_tabelas!");
     return -1;
@@ -363,3 +371,5 @@ for(i = 0; i < nSockets; i++){
 }
 
 
+//////////////////////////
+int pthread_create (pthread_t*thread,const pthread_attr_t*attr,void* (*func) (void*), void*arg);
