@@ -222,11 +222,11 @@ void quitFunc (){
 
 int main(int argc, char **argv){
 
-  if(argc > 2) {
+  if(argc > 2) { //primario
     t_server = 1;
   }
 
-  else if(argc = 2) {
+  else if(argc = 2) { //secundario
     t_server = 0;
   }
 
