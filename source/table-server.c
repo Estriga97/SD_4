@@ -25,7 +25,7 @@
 
 static int quit = 0;
 static int nTables;
-static int t_server;
+static int t_server; // 1 = primario, 0 = secundario
 
 void shift(struct pollfd* connects, int i) {
   
@@ -224,10 +224,21 @@ int main(int argc, char **argv){
 
   if(argc > 2) { //primario
     t_server = 1;
+    server_t primario;
+    if(primario = (server_t*) malloc(sizeof(server_t)) == NULL) {
+      fprintf(stderr, "Erro ao preparar server primario!");
+      return -1;
+    }
+
   }
 
   else if(argc = 2) { //secundario
     t_server = 0;
+    server_t secundario;
+    if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
+      fprintf(stderr, "Erro ao preparar server secundario!");
+      return -1;
+    }
   }
 
   else { // alguem nao sabe chamar a merda dos servidores (estriga?)
