@@ -300,9 +300,9 @@ int main(int argc, char **argv){
 
     else if(argc = 2) { //secundario
         t_server = 0;
-        server_t secundario;
+        server_t primario;
         if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
-            fprintf(stderr, "Erro ao preparar server secundario!");
+            fprintf(stderr, "Erro ao preparar server primario!");
             return -1;
         }
     }
