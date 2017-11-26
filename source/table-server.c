@@ -218,17 +218,80 @@ int network_receive_send(int sockfd){
 void quitFunc (){
   quit = 1;
 
+} 
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+struct server_t *server_connect(struct server_t* sec_serv){
+
+	/* Verificar parâmetro da função e alocação de memória */
+	if(sec_serv = NULL && sec_serv -> port_sev == NULL && sec_serv -> ip_sev == NULL){
+		return NULL;
+  }
+
+	int sockfd;
+
+	/* Estabelecer ligação ao servidor:
+
+		Preencher estrutura struct sockaddr_in com dados do
+		endereço do servidor.
+
+		Criar a socket.
+
+		Estabelecer ligação.
+	*/
+	struct sockaddr_in* addr;
+	if((addr = malloc(sizeof(struct sockaddr_in))) == NULL) {
+		fprintf(stderr, "Erro ao alocar memoria!");
+		return NULL;
+	}
+	char* token;
+	fprintf(token, "%d",sec_serv -> ip_sev);
+
+	addr-> sin_family = AF_INET;
+	if (inet_pton(AF_INET, token, &(addr-> sin_addr)) < 1) {
+		printf("Erro ao converter IP\n");
+		return NULL;
+		}
+
+	addr-> sin_port = htons(sec_serv -> port_sev);
+
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		fprintf(stderr, "Erro ao criar socket TCP!");
+		return NULL;
+	}
+
+	// Estabelece conexão com o servidor definido em server
+	if (connect(sockfd,(struct sockaddr *)addr, sizeof(*addr)) < 0) {
+		fprintf(stderr, "Erro ao conectar-se ao servidor!");
+		close(sockfd);
+		return NULL;
 }
+	/* Se a ligação não foi estabelecida, retornar NULL */
+  sec_serv -> socket = sockfd;
+  sec_serv -> state = 1;
+
+	free(addr);
+	return sec_serv;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
 
   if(argc > 2) { //primario
     t_server = 1;
-    server_t primario;
-    if(primario = (server_t*) malloc(sizeof(server_t)) == NULL) {
+
+    server_t secundario;
+    if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
       fprintf(stderr, "Erro ao preparar server primario!");
       return -1;
     }
+
+    // falta tratar a length
+    secundario -> id_serv = atoi(argv[3]);
+    secundario -> port_sev = atoi(argv[4]);
+    secundario -> state = 0; // DOWN
 
   }
 
@@ -275,7 +338,7 @@ int main(int argc, char **argv){
   signal(SIGPIPE, SIG_IGN);
 
 
-if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) {
+if ((listening_socket = make_server_socket((argv[1]))) < 0) {
   printf("Erro ao criar servidor!");
   return -1;
 }
