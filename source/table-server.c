@@ -25,7 +25,7 @@
 
 static int quit = 0;
 static int nTables;
-static int t_server; // 1 = primario, 0 = secundario
+static int primario; // 1 = primario, 0 = secundario
 
 void shift(struct pollfd* connects, int i) {
     
@@ -278,7 +278,7 @@ int *server_connect(struct server_t* sec_serv){
 int main(int argc, char **argv){
 
     if(argc > 2) { //primario
-        t_server = 1;
+        primario = 1;
 
         server_t secundario;
         if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
@@ -286,33 +286,11 @@ int main(int argc, char **argv){
         	return -1;
         }
 
-        // falta tratar a length
+        
         secundario -> id_serv = atoi(argv[3]);
         secundario -> port_sev = atoi(argv[4]);
         secundario -> state = 0; // DOWN
-
-	if(server_connect(secundario) < 0) {
-		fprintf(stderr, "Erro ao conectar server secundario!");
-        	return -1;
-	}
-
-    }
-
-    else if(argc = 2) { //secundario
-        t_server = 0;
-        server_t primario;
-        if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
-            fprintf(stderr, "Erro ao preparar server primario!");
-            return -1;
-        }
-    }
-
-    else { // alguem nao sabe chamar a merda dos servidores (estriga?)
-        printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
-        printf("Exemplo de uso: ./server 54321 10 15 20 25\n");
-        return -1;
-    }
-
+    
     int listening_socket,i;
     char ** lista_tabelas;
 
@@ -336,6 +314,50 @@ int main(int argc, char **argv){
     }
 
     lista_tabelas[argc-2] = NULL;
+
+    /////////////////////////////////////
+    
+    int cnt_sec;
+	if(server_connect(secundario) < 0)
+        cnt_sec = 0;
+    else {
+        struct message_t* msg_tables;
+        if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
+            fprintf(stderr, "Erro ao alocar memoria");
+            return NULL;
+        }
+        cnt_sec = 1;
+        msg_tables -> opcode = OC_TABLES;
+        msg_tables -> c_type = CT_SZ_TABLES;
+        msg_tables -> table_num = 0
+
+        msg_tables -> content.key = ;
+
+    }
+
+
+}
+
+////////////////////////////////////////////////////////////////
+
+    else if(argc = 2) { //secundario
+        primario = 0;
+        server_t primario;
+        if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
+            fprintf(stderr, "Erro ao preparar server primario!");
+            return -1;
+        }
+    }
+
+////////////////////////////////////////////////////////////////
+
+    else { // alguem nao sabe chamar a merda dos servidores (estriga?)
+        printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
+        printf("Exemplo de uso: ./server 54321 10 15 20 25\n");
+        return -1;
+    }
+
+////////////////////////////////////////////////////////////////
 
     nTables = argc - 2;
     signal(SIGPIPE, SIG_IGN);
