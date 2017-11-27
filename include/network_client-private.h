@@ -4,8 +4,11 @@
 #include "inet.h"
 #include "network_client.h"
 
+#define RETRY_TIME 5
+
 struct server_t{
 	int socket;
+	int server_type; //0 se for o principal, 1 se for o secundario
 	/* Atributos importantes para interagir com o servidor, */
 	/* tanto antes da ligação estabelecida, como depois.    */
 };

@@ -16,12 +16,13 @@
 #include "client_stub-private.h"
 
 #define MAX_READ 81
+#define MAX_TENTATIVA 2
 
 int main(int argc, char **argv){
 
 	/* Testar os argumentos de entrada */
-	if(argc != 2){
-		fprintf(stderr, "Argumentos de entrada errados! ./client IP:port \n");
+	if(argc != 3){
+		fprintf(stderr, "Argumentos de entrada errados! ./client IP:port IP:port \n");
 		return -1;
 	}
 
@@ -29,12 +30,35 @@ int main(int argc, char **argv){
 	    
 	char input [MAX_READ];
 	signal(SIGPIPE, SIG_IGN);
+	int tentativas = 0;
 
-	/* Usar network_connect para estabelcer ligação ao servidor */
-	if((rtables = rtables_bind(argv[1])) == NULL){
-		fprintf(stderr, "Erro a establecer ligaçao ao servidor!");
-		return -1;
-	}
+	//tentar as conecçoes ao servidor principal seguido do servidor secundario
+   do {
+	   if(tentativas > 0){
+		   fprintf(stderr, "Tentar ligaçao outra vez!");
+		   sleep(RETRY_TIME);
+	   }
+		/* Usar network_connect para estabelcer ligação ao servidor principal */
+		if((rtables = rtables_bind(argv[1])) == NULL){
+			fprintf(stderr, "Erro a establecer ligaçao ao servidor principal!");
+		}		
+		else{
+			rtables -> server -> server_type = 0;
+			fprintf(stderr, "Ligado ao servidor principal.");
+		}
+
+		/* Usar network_connect para estabelcer ligação ao servidor secundario */
+		if((rtables == NULL && rtables = rtables_bind(argv[2])) == NULL){
+			fprintf(stderr, "Erro a establecer ligaçao ao servidor secundario!");
+		}
+		else{
+			rtables -> server -> server_type = 1;
+			fprintf(stderr, "Ligado ao servidor secundario.");
+		}
+		tentativas++;
+   }
+   while(rtables == NULL && tentativas < MAX_TENTATIVA);
+
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
 	int condicao = -1;
