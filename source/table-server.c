@@ -489,12 +489,10 @@ int main(int argc, char **argv){
             fprintf(stderr, "Erro ao preparar server primario!");
             return -1;
         }
-        make_server_socket(short port)
-
-            if((primario->socket = accept(listening_socket,NULL,NULL)) != -1){
-                network_receive_send(primario->socket,&lista_tabelas);
-        
+        if((primario->socket = accept(listening_socket,NULL,NULL)) != -1){
+            network_receive_send(primario->socket,&lista_tabelas);
         }
+
         }
         
 
