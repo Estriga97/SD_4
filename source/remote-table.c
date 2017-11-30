@@ -326,7 +326,7 @@ void rtables_free_keys(char **keys){
     }
 }
 
-int rtables_sztbles(int socket,char** lst_tbls,int size) {
+int rtables_sz_tbles(int socket,char** lst_tbls, int size) {
     struct message_t* msg_tables;
         if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria");
@@ -339,8 +339,9 @@ int rtables_sztbles(int socket,char** lst_tbls,int size) {
         msg_tables -> table_num = -1;
 
         char** cnt_keys = msg_tables -> content.keys;
-
-        msg_tables -> content.keys = (char**) malloc(sizeof(char*)*size);//falta fazer ciclo para copiar char ** em keys
+        if((cnt_keys = (char**) malloc(sizeof(char*)*size)) == NULL)
+            return -1;
+        
         int i;
         for(i = 0; i < size; i++) {
             if((cnt_keys[i] = strdup(lst_tbls[i])) == NULL) {
@@ -348,6 +349,7 @@ int rtables_sztbles(int socket,char** lst_tbls,int size) {
                     free(cnt_keys[i]);
                     i--;
                 }
+                free(cnt_keys);
                 return -1;
             }
         }
