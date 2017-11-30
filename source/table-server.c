@@ -450,7 +450,7 @@ int main(int argc, char **argv){
         memcpy(lista_tabelas[i-3],argv[i],strlen(argv[i])+1);
     }
 
-    lista_tabelas[argc-2] = NULL;
+    lista_tabelas[argc-3] = NULL;
 
     /////////////////////////////////////
     
@@ -458,22 +458,11 @@ int main(int argc, char **argv){
 	if(server_connect(secundario) < 0)
         cnt_sec = 0;
     else {
-        struct message_t* msg_tables;
-        if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria");
+ 
+        if((rtables_sztbles(secundario->socket,lista_tabelas,[argc-3) == -1) {
             return NULL;
         }
         cnt_sec = 1;
-        msg_tables -> opcode = OC_TABLES;
-        msg_tables -> c_type = CT_SZ_TABLES;
-        msg_tables -> table_num = -1;
-
-        msg_tables -> content.key = strdup(lista_tabelas);
-
-        if(network_send_receive(secundario, msg_tables)==NULL){
-            fprintf(stderr, "Problema na ligação");
-            cnt_sec = 0;
-        }
 
     }
 

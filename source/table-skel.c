@@ -197,4 +197,23 @@ void get_keys(int n){
       else{
         fprintf(stderr, "Tamanho do argumento errado!");
       }
+    }
+    
+
+struct message_t invoke_server_version(struct message_t){
+
+      table_skel_init(msg_pedido.content->keys);
+      msg_resposta = malloc(sizeof(struct message_t));
+      msg_resposta  -> opcode = OC_TABLES;
+      msg_resposta  -> c_type = CT_SZ_TABLES;
+      msg_resposta  -> table_num = -1; }
+
+
+struct entry_t* get_tbl_keys(int n){
+    struct table_t* tbl = tabelas[n];
+    if(tbl -> filled != 0)
+        return NULL;
+    
+
+
 }
