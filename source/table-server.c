@@ -19,7 +19,9 @@
 #include "network_client-private.h"
 #include "message-private.h"
 #include "table_skel-private.h"
+#include "client_stub-private.h"
 #include "primary_backup.h"
+
 
 #define SOCKETS_NUMBER 6
 
@@ -404,7 +406,7 @@ int *server_connect(struct server_t* sec_serv){
 	return sec_serv;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////    MAIN    /////////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
 
@@ -418,7 +420,7 @@ int main(int argc, char **argv){
     if(argc > 2) { //primario
         primario = 1;
 
-        server_t secundario;
+        struct server_t* secundario;
         if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
         	fprintf(stderr, "Erro ao preparar server primario!");
         	return -1;
@@ -435,7 +437,7 @@ int main(int argc, char **argv){
         fprintf(stderr, "Erro ao preparar lista_tabelas!");
         return -1;
     }
-    
+    int i;
     for(i = 3; i < argc; i++ ){
         if((lista_tabelas[i-3] = (char *) malloc(strlen(argv[i])+1)) == NULL) {
             while(i != 0) {
@@ -459,7 +461,7 @@ int main(int argc, char **argv){
         cnt_sec = 0;
     else {
  
-        if((rtables_sztbles(secundario->socket,lista_tabelas,[argc-3) == -1) {
+        if(rtables_sz_tbles(secundario->socket,lista_tabelas,argc-3) == -1) {
             return NULL;
         }
         cnt_sec = 1;
@@ -473,8 +475,8 @@ int main(int argc, char **argv){
 
     else if(argc = 2) { //secundario
         primario = 0;
-        server_t primario;
-        if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
+        struct server_t* primario;
+        if(secundario = (struct server_t*) malloc(sizeof(struct server_t)) == NULL) {
             fprintf(stderr, "Erro ao preparar server primario!");
             return -1;
         }
