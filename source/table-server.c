@@ -29,130 +29,6 @@ static int quit = 0;
 static int nTables;
 static int primario; // 1 = primario, 0 = secundario
 
-struct message_t *network_send_receive(struct server_t *server, struct message_t *msg){
-
-	/* Verificar parâmetros de entrada */
-	if(server == NULL || msg == NULL) {
-		fprintf(stderr, "Erro no contudo recebido (server ou msg)!");
-		return messgerror ();
-	}
-
-	char *message_out;
-	int message_size, msg_size, result,i;
-	struct message_t* msg_resposta;
-
-
-
-	/* Serializar a mensagem recebida */
-	message_size = message_to_buffer(msg, &message_out);
-   
-	/* Verificar se a serialização teve sucesso */
-	if(message_size == -1) {
-		fprintf(stderr, "Erro no tamanho da mensagem!");
-		free(message_out);
-		free_message(msg);
-		return messgerror ();}
-
-	/* Enviar ao servidor o tamanho da mensagem que será enviada
-	   logo de seguida
-	*/
-	msg_size = htonl(message_size);
- 	while((result = write_all(server->socket, (char *) &msg_size, _INT)) == -1 && i!= 1){
-		sleep(5);
-		i++;
-	 }
-	 i = 0;
-	/* Verificar se o envio teve sucesso */
-	if(result == -1) {
-		fprintf(stderr, "Erro ao enviar!");
-		free(message_out);
-		free_message(msg);
-		return messgerror ();
-	}
-
-	/* Enviar a mensagem que foi previamente serializada */
-	while((result = write_all(server->socket, message_out, message_size)) == -1 && i!= 1){
-		sleep(5);
-		i++;
-	 }
-	 i = 0;
-	/* Verificar se o envio teve sucesso */
-	if(result == -1) {
-		fprintf(stderr, "Erro ao enviar!");
-		free(message_out);
-		free_message(msg);
-		return messgerror ();
-	}
-
-	/* De seguida vamos receber a resposta do servidor:
-
-		Com a função read_all, receber num inteiro o tamanho da 
-		mensagem de resposta.
-
-		Alocar memória para receber o número de bytes da
-		mensagem de resposta.
-
-		Com a função read_all, receber a mensagem de resposta.
-		
-	*/
-	int size;
-
-	while((result = read_all(server->socket,(char*) &size, _INT) ) == -1 && i!= 1){
-		sleep(5);
-		i++;
-	 }
-	 i = 0;
-	
-	if(result == -1) {
-		fprintf(stderr, "Erro ao receber o tamanho da mensagem de resposta!");
-		free(message_out);
-		free_message(msg);
-		return messgerror ();
-	}
-
-	size = ntohl(size);
-	char* buff;
-	if((buff = (char*) malloc(size)) == NULL) {
-		fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta!");
-		free(message_out);
-		free_message(msg);
-		return messgerror ();
-	}
-
-	while((result = read_all(server->socket, buff, size) ) == -1 && i!= 1){
-		sleep(5);
-		i++;
-	 }
-	 i = 0;
-
-	if(result == -1) {
-		fprintf(stderr, "Erro receber a mensagem de resposta!");
-		free(message_out);
-		free(msg);
-		free(buff);
-		return messgerror ();
-	}
-
-	/* Desserializar a mensagem de resposta */
-	msg_resposta = buffer_to_message(buff, size);
-
-	/* Verificar se a desserialização teve sucesso */
-	if(msg_resposta == NULL) {
-		fprintf(stderr, "Erro na desserialização!");
-		free(message_out);
-		free_message(msg_resposta);
-		free(msg);
-		free(buff);
-		return messgerror ();
-	}
-
-	/* Libertar memória */
-	free(message_out);
-	free(buff);
-
-	return msg_resposta;
-}
-
 void shift(struct pollfd* connects, int i) {
     
     if(connects == NULL || i < 0){
@@ -223,7 +99,7 @@ int make_server_socket(short port){
     
     -1 se o cliente se desconectou, -2 se ocorreu um erro
 */
-int network_receive_send(int sockfd,char**mensagem_servers){
+int network_receive_send(int sockfd){
 
     /* Verificar parâmetros de entrada */
     if(sockfd == -1) {
@@ -279,12 +155,9 @@ int network_receive_send(int sockfd,char**mensagem_servers){
     }
 
     /* Processar a mensagem */
-    if(msg_pedido->table_num==-1){
-          mensagem_servers = &(strdup(msg_pedido.content->key));
-          msg_resposta = malloc(sizeof(struct message_t));
-          msg_resposta  -> opcode = OC_TABLES;
-          msg_resposta  -> c_type = CT_SZ_TABLES;
-          msg_resposta  -> table_num = -1; 
+    if(msg_pedido->table_num == -1){
+          if((msg_resposta = invoke_server_version(msg_pedido)) == NULL)
+            return -1;
     }
     else if(msg_pedido -> table_num >= nTables){
         msg_resposta = messgerror();
@@ -353,11 +226,11 @@ void quitFunc (){
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-int *server_connect(struct server_t* sec_serv){
+int server_connect(struct server_s* sec_serv){
 
 	/* Verificar parâmetro da função e alocação de memória */
 	if(sec_serv = NULL && sec_serv -> port_sev == NULL && sec_serv -> ip_sev == NULL){
-		return NULL;
+		return -1;
     }
 
 	int sockfd;
@@ -403,16 +276,17 @@ int *server_connect(struct server_t* sec_serv){
     sec_serv -> state = 1;
 
 	free(addr);
-	return sec_serv;
+	return 0;
 }
 
 ///////////////////////////////////    MAIN    /////////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
 
-     int listening_socket,i;
+    int listening_socket,i;
+    char ** lista_tabelas;
 
-    if ((listening_socket = make_server_socket((argv[1]))) < 0) {
+    if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) {
         printf("Erro ao criar servidor!");
         return -1;
 }
@@ -420,8 +294,8 @@ int main(int argc, char **argv){
     if(argc > 2) { //primario
         primario = 1;
 
-        struct server_t* secundario;
-        if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
+        struct server_s* secundario;
+        if(secundario = (server_s*) malloc(sizeof(server_s)) == NULL) {
         	fprintf(stderr, "Erro ao preparar server primario!");
         	return -1;
         }
@@ -430,8 +304,6 @@ int main(int argc, char **argv){
         secundario -> id_serv = atoi(strtock(argv[3],":"));
         secundario -> port_sev = atoi(strtock(NULL,":"));
         secundario -> state = 0; // DOWN
-    
-    char ** lista_tabelas;
 
     if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) {
         fprintf(stderr, "Erro ao preparar lista_tabelas!");
@@ -460,12 +332,10 @@ int main(int argc, char **argv){
 	if(server_connect(secundario) < 0)
         cnt_sec = 0;
     else {
- 
         if(rtables_sz_tbles(secundario->socket,lista_tabelas,argc-3) == -1) {
-            return NULL;
+            return -1;
         }
         cnt_sec = 1;
-
     }
 
 
@@ -473,17 +343,15 @@ int main(int argc, char **argv){
 
 ////////////////////////////////////////////////////////////////
 
-    else if(argc = 2) { //secundario
+    else if(argc == 2) { //secundario
         primario = 0;
-        struct server_t* primario;
-        if(secundario = (struct server_t*) malloc(sizeof(struct server_t)) == NULL) {
+        struct server_s* primario;
+        if((primario = (struct server_s*) malloc(sizeof(struct server_s))) == NULL) {
             fprintf(stderr, "Erro ao preparar server primario!");
             return -1;
         }
         if((primario->socket = accept(listening_socket,NULL,NULL)) != -1){
-            network_receive_send(primario->socket,&lista_tabelas);
-        }
-
+            network_receive_send(primario->socket,lista_tabelas);
         }
         
 
