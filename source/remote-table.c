@@ -31,7 +31,7 @@ struct rtables_t *rtables_bind(const char *address_port){
     rtables -> server = server;
     int result;
     if(read_all(server->socket,(char*)&result, _INT) == -1) {
-		fprintf(stderr, "Erro ao read_all1");
+		fprintf(stderr, "Erro ao read_all!");
 		return NULL;
     }
     rtables -> n_tables = ntohl(result);

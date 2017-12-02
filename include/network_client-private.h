@@ -8,7 +8,9 @@
 
 struct server_t{
 	int socket;
-	int server_type; //0 se for o principal, 1 se for o secundario
+	int server_type; //1 se for o principal, 0 se for o secundario
+	char *ip_port_primario; //ip e port do servidor primario
+	char *ip_port_secundario; //ip e port do servidor secundario
 	/* Atributos importantes para interagir com o servidor, */
 	/* tanto antes da ligação estabelecida, como depois.    */
 };

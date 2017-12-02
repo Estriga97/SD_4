@@ -1,6 +1,7 @@
 {
     "files.associations": {
-        "network_client-private.h": "c"
+        "network_client-private.h": "c",
+        "message-private.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

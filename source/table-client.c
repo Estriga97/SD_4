@@ -32,32 +32,35 @@ int main(int argc, char **argv){
 	signal(SIGPIPE, SIG_IGN);
 	int tentativas = 0;
 
-	//tentar as conecçoes ao servidor principal seguido do servidor secundario
-   do {
-	   if(tentativas > 0){
-		   fprintf(stderr, "Tentar ligaçao outra vez!");
-		   sleep(RETRY_TIME);
-	   }
-		/* Usar network_connect para estabelcer ligação ao servidor principal */
-		if((rtables = rtables_bind(argv[1])) == NULL){
-			fprintf(stderr, "Erro a establecer ligaçao ao servidor principal!");
-		}		
-		else{
-			rtables -> server -> server_type = 0;
-			fprintf(stderr, "Ligado ao servidor principal.");
+		//tentar as conecçoes ao servidor principal seguido do servidor secundario
+	do {
+		if(tentativas > 0){
+			fprintf(stderr, "Tentar ligaçao outra vez!");
+			sleep(RETRY_TIME);
 		}
+			/* Usar network_connect para estabelcer ligação ao servidor principal */
+			if((rtables = rtables_bind(argv[1])) == NULL){
+				fprintf(stderr, "Erro a establecer ligaçao ao servidor principal!");
+			}		
+			else{
+				rtables -> server -> server_type = 1;
+				fprintf(stderr, "Ligado ao servidor principal.");
+			}
 
-		/* Usar network_connect para estabelcer ligação ao servidor secundario */
-		if((rtables == NULL && rtables = rtables_bind(argv[2])) == NULL){
-			fprintf(stderr, "Erro a establecer ligaçao ao servidor secundario!");
-		}
-		else{
-			rtables -> server -> server_type = 1;
-			fprintf(stderr, "Ligado ao servidor secundario.");
-		}
-		tentativas++;
-   }
-   while(rtables == NULL && tentativas < MAX_TENTATIVA);
+			/* Usar network_connect para estabelcer ligação ao servidor secundario */
+			if((rtables == NULL && rtables = rtables_bind(argv[2])) == NULL){
+				fprintf(stderr, "Erro a establecer ligaçao ao servidor secundario!");
+			}
+			else{
+				rtables -> server -> server_type = 0;
+				fprintf(stderr, "Ligado ao servidor secundario.");
+			}
+			tentativas++;
+	}
+	while(tentativas < MAX_TENTATIVA && rtables == NULL );
+
+	rtables -> server -> ip_port_primario = strdup(argv[1]);
+	rtables -> server -> ip_port_secundario = strdup(argv[2]);
 
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
