@@ -8,6 +8,8 @@
 #include "message-private.h"
 #include "inet.h"
 
+#define SLEEP_TIME 5
+#define MAX_TENTATIVA 4
 struct server_t *network_connect(const char *address_port){
 
 	/* Verificar parâmetro da função e alocação de memória */
@@ -76,7 +78,8 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	}
 
 	char *message_out;
-	int message_size, msg_size, result,i;
+	int message_size, msg_size, result;
+	int tentativas = 0;
 	struct message_t* msg_resposta;
 
 
@@ -95,11 +98,25 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	   logo de seguida
 	*/
 	msg_size = htonl(message_size);
- 	while((result = write_all(server->socket, (char *) &msg_size, _INT)) == -1 && i!= 1){
-		sleep(5);
-		i++;
-	 }
-	 i = 0;
+
+
+	do{
+		if(result = write_all(server->socket, (char *) &msg_size, _INT)) == -1){
+			sleep(SLEEP_TIME);
+			if(server -> server_type){
+				network_connect(server -> ip_port_secundario);
+				server -> server_type = 0;
+			}
+			else{
+				network_connect(server -> ip_port_primario);
+				server -> server_type = 1;
+			}
+		}	
+
+		tentativas++;
+	}
+	while(result == -1 && tentativas < MAX_TENTATIVA);
+
 	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
 		fprintf(stderr, "Erro ao enviar!");
@@ -108,19 +125,36 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		return messgerror ();
 	}
 
+	//reset nas tentativas de conecçao
+	tentativas = 0;
+
 	/* Enviar a mensagem que foi previamente serializada */
-	while((result = write_all(server->socket, message_out, message_size)) == -1 && i!= 1){
-		sleep(5);
-		i++;
-	 }
-	 i = 0;
-	/* Verificar se o envio teve sucesso */
+	do{	
+		if(result = write_all(server->socket, message_out, message_size)) == -1){
+			sleep(SLEEP_TIME);
+			if(server -> server_type){
+				network_connect(server -> ip_port_secundario);
+				server -> server_type = 0;
+			}
+			else{
+				network_connect(server -> ip_port_primario);
+				server -> server_type = 1;
+			}
+		}
+		
+		tentativas++;
+
+	} while(result == -1 && tentativas < MAX_TENTATIVA);
+
 	if(result == -1) {
 		fprintf(stderr, "Erro ao enviar!");
 		free(message_out);
 		free_message(msg);
 		return messgerror ();
 	}
+
+	//reset nas tentativas de conecçao
+	tentativas = 0;
 
 	/* De seguida vamos receber a resposta do servidor:
 
@@ -135,18 +169,32 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	*/
 	int size;
 
-	while((result = read_all(server->socket,(char*) &size, _INT) ) == -1 && i!= 1){
-		sleep(5);
-		i++;
-	 }
-	 i = 0;
-	
+	do{
+		if(result = read_all(server->socket,(char*) &size, _INT) ) == -1){
+			sleep(SLEEP_TIME);
+			if(server -> server_type){
+				network_connect(server -> ip_port_secundario);
+				server -> server_type = 0;
+			}
+			else{
+				network_connect(server -> ip_port_primario);
+				server -> server_type = 1;
+			}
+		}
+
+		tentativas++;
+
+	} while(result == -1 && tentativas < MAX_TENTATIVA);
+
 	if(result == -1) {
 		fprintf(stderr, "Erro ao receber o tamanho da mensagem de resposta!");
 		free(message_out);
 		free_message(msg);
 		return messgerror ();
 	}
+
+	//reset nas tentativas de conecçao
+	tentativas = 0;
 
 	size = ntohl(size);
 	char* buff;
@@ -158,7 +206,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	}
 
 	while((result = read_all(server->socket, buff, size) ) == -1 && i!= 1){
-		sleep(5);
+		sleep(SLEEP_TIME);
 		i++;
 	 }
 	 i = 0;
