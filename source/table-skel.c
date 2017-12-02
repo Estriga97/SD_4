@@ -200,14 +200,22 @@ void get_keys(int n){
     }
     
 
-struct message_t invoke_server_version(struct message_t){
+struct message_t* invoke_server_version(struct message_t* msg_pedido){
 
-      table_skel_init(msg_pedido.content->keys);
-      msg_resposta = malloc(sizeof(struct message_t));
-      msg_resposta  -> opcode = OC_TABLES;
-      msg_resposta  -> c_type = CT_SZ_TABLES;
-      msg_resposta  -> table_num = -1; }
+    if(table_skel_init(msg_pedido.content->keys) == -1)
+        return NULL;
 
+    struct message_t* msg_resposta;
+    if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)) == NULL)
+        return NULL;
+    
+    msg_resposta  -> opcode = OC_TABLES;
+    msg_resposta  -> c_type = CT_SZ_TABLES;
+    msg_resposta  -> table_num = -1; 
+    
+    return msg_resposta;
+
+    }
 
 struct entry_t* get_tbl_keys(int n){
     struct table_t* tbl = tabelas[n];
