@@ -457,7 +457,7 @@ int main(int argc, char **argv){
         cnt_sec = 0;
     else {
  
-        if((rtables_sztbles(secundario->socket,lista_tabelas,[argc-3) == -1) {
+        if((rtables_sztbles(secundario->socket,lista_tabelas,argc-3) == -1) {
             return-1;
         }
         cnt_sec = 1;

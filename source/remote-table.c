@@ -326,16 +326,15 @@ void rtables_free_keys(char **keys){
     }
 }
 
-int rtables_sz_tbles(int socket,char** lst_tbls, int size) {
+int rtables_sz_tbles(int socket,char** lst_tbls, int size,short c_type) {
     struct message_t* msg_tables;
         if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria");
             return -1;
         }
         
-        cnt_sec = 1;
         msg_tables -> opcode = OC_TABLES;
-        msg_tables -> c_type = CT_SZ_TABLES;
+        msg_tables -> c_type = c_type;
         msg_tables -> table_num = -1;
 
         char** cnt_keys = msg_tables -> content.keys;
