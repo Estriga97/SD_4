@@ -278,8 +278,8 @@ int network_receive_send(int sockfd){
     }
 
     /* Processar a mensagem */
-    if(msg_pedido->table_num==-1){
-         if(invoke_server_version(msg_pedido)==NULL)
+    if(msg_pedido->table_num == -1){
+         if((msg_resposta =invoke_server_version(msg_pedido))==NULL)
             return -2;
     }
     else if(msg_pedido -> table_num >= nTables){

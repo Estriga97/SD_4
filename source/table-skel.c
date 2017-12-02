@@ -202,17 +202,27 @@ void get_keys(int n){
 
 struct message_t* invoke_server_version(struct message_t* msg_pedido){
 
-    if(table_skel_init(msg_pedido.content->keys) == -1)
-        return NULL;
-
     struct message_t* msg_resposta;
     if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)) == NULL)
         return NULL;
     
-    msg_resposta  -> opcode = OC_TABLES;
-    msg_resposta  -> c_type = CT_SZ_TABLES;
-    msg_resposta  -> table_num = -1; 
-    
+    short c_type = msg_pedido->opcode
+    switch (c_type) {
+       case CT_SZ_TABLES:
+        if(table_skel_init(msg_pedido.content->keys) == -1)//init
+          return NULL;
+        msg_resposta  ->  = OC_TABLES;
+        msg_resposta  -> c_type = CT_SZ_TABLES;
+        msg_resposta  -> table_num = -1; 
+        break;
+        case CT_ACK:
+        if(table_skel_init(msg_pedido.content->keys) == -1)//init
+          return NULL;
+        msg_resposta  ->  = OC_TABLES;
+        msg_resposta  -> c_type = CT_ACK;
+        msg_resposta  -> table_num = -1;
+        break;
+
     return msg_resposta;
 
     }
