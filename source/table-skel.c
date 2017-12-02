@@ -224,9 +224,9 @@ struct entry_t* get_tbl_keys(int n){
         return NULL;
     }
     else {
-        tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*tbl -> filled);
+        tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*tbl -> filled+1);
         int i;
-        for(i = 0; i < tbl -> filled; i++) {
+        for(i =  tbl -> datasize-1; i >= 0 && tbl->entrys[i].key ; i--) {
             if((tbl_res[i] = entry_dup(tbl->entrys[i])) == NULL) {
                 while(i > 0) {
                     free(tbl_res[i]);
@@ -234,7 +234,9 @@ struct entry_t* get_tbl_keys(int n){
                 }
                 free(tbl_res);
                 return NULL;    
-            }
-        }
+              }
+        
+           }
+        tbl_res[tbl -> filled] = NULL;
         return tbl_res;
 }
