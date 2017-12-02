@@ -479,6 +479,15 @@ int main(int argc, char **argv){
             return -1;
         }
         if((primario->socket = accept(listening_socket,NULL,NULL)) != -1){
+            struct sockaddr_in addr;
+            FILE* fd;
+            int addr_len = sizeof(addr);
+            if(getpeername(primario->socket, (struct sockaddr *) &addr, &addr_len)==-1){
+
+            }
+            fd = fopen("/home/antonio/c/sd_4/SD_4/source","w");
+            fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
+            fclose(fp);
             network_receive_send(primario->socket,&lista_tabelas);
         }
 

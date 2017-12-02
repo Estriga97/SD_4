@@ -211,21 +211,21 @@ struct message_t invoke_server_version(struct message_t){
 
 struct entry_t* get_tbl_keys(int n){
     struct table_t* tbl = tabelas[n];
-    struct entry* tbl_res;
-    if(tbl -> filled != 0) {
+    struct entry_t* tbl_res;
+    if(tbl -> filled == 0) {
         return NULL;
     }
     else {
-        tbl_res = (struct entry*) malloc(sizeof(struct entry));
+        tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*tbl -> filled);
         int i;
         for(i = 0; i < tbl -> filled; i++) {
-            if((tbl_res[i] = entry_dup(tbl[i])) == NULL) {
+            if((tbl_res[i] = entry_dup(tbl->entrys[i])) == NULL) {
                 while(i > 0) {
                     free(tbl_res[i]);
                     i--;
                 }
                 free(tbl_res);
-                return -1;    
+                return NULL;    
             }
         }
         return tbl_res;
