@@ -326,41 +326,4 @@ void rtables_free_keys(char **keys){
     }
 }
 
-int rtables_sz_tbles(int socket,char** lst_tbls, int size,short c_type) {
-    struct message_t* msg_tables;
-        if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria");
-            return -1;
-        }
-        
-        msg_tables -> opcode = OC_TABLES;
-        msg_tables -> c_type = c_type;
-        msg_tables -> table_num = -1;
 
-        char** cnt_keys = msg_tables -> content.keys;
-        if((cnt_keys = (char**) malloc(sizeof(char*)*size)) == NULL)
-            return -1;
-        
-        int i;
-        for(i = 0; i < size; i++) {
-            if((cnt_keys[i] = strdup(lst_tbls[i])) == NULL) {
-                while(i > 0) {
-                    free(cnt_keys[i]);
-                    i--;
-                }
-                free(cnt_keys);
-                return -1;
-            }
-        }
-}
-
-    struct message_t msg_resposta = network_send_receive(socket, msg_tables);
-        if(msg_resposta == NULL){
-            imprimir_resposta(messgerror ());
-            free(msg_resposta);
-            return -1;
-        }
-    imprimir_resposta(msg_resposta);
-    free(msg_resposta);
-    return 0;
-}
