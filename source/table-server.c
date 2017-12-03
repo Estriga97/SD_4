@@ -508,6 +508,10 @@ int server_connect(struct server_t* server){
 	return sec_serv;
 }
 
+void* pthread_main(void* params) {
+
+}
+
 //////////////////////////////////////// main ////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
@@ -569,18 +573,6 @@ int main(int argc, char **argv){
             secundario -> state = 0;
         else { 
             cnt_sec = 1;
-/*             struct rtables_t *rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t));
-            rtables -> server = secundario;
-            rtables -> n_tables = nTables;
-            for(i = 0 ; i < nTables;i++){
-                struct entry* lista_entrys= get_tbl_keys(i);
-                rtables -> table_num = 0;
-                while(*lista_entrys!=NULL){
-                    rtables_put(rtables, *lista_entrys.key, *lista_entrys.value); // n ha if
-                    lista_entrys++;
-                }
-                rtables -> table_num++;
-            } */
             int rtbales_ack_res = rtables_ack(secundario);
             if(rtbales_ack_res == -1) {
                 return -1;
@@ -682,6 +674,26 @@ int main(int argc, char **argv){
             int socket_de_cliente;
             if(nSockets < SOCKETS_NUMBER){
                 if((socket_de_cliente = accept(connections[0].fd,NULL,NULL)) != -1){
+                    struct sockaddr_in addr2;
+                    int addr_len2 = sizeof(addr2);
+                    if(getpeername(socket_client, (struct sockaddr *) &addr2, &addr_len2) == -1) // a confirmar connect_ip
+                        return -1;
+                    long connect_ip = htonl(atol(strtok(secundario -> ip_port, ":")));
+                    if(conect_ip == addr2 -> sin_addr.s_addr) {
+                        struct rtables_t *rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t));
+                        rtables -> server = secundario;
+                        rtables -> n_tables = nTables;
+                        for(i = 0 ; i < nTables;i++){
+                            struct entry* lista_entrys= get_tbl_keys(i);
+                            rtables -> table_num = 0;
+                            while(*lista_entrys!=NULL){
+                                rtables_put(rtables, *lista_entrys.key, *lista_entrys.value); // n ha if
+                                lista_entrys++;
+                            }
+                            rtables -> table_num++;
+                        }
+                    }
+
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_de_cliente;
                     connections[nSockets].events = POLLIN;
