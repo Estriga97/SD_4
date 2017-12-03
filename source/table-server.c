@@ -28,44 +28,75 @@ static int nTables;
 static int primario; // 1 = primario, 0 = secundario
 static int secundario_ready = 0;
 
-int rtables_sz_tbles(int socket,char** lst_tbls, int size,short c_type) {
+
+
+//////////////////////////////////// rtables_sz_tbles ////////////////////////////////////////////////////////
+
+int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int sizE) {
     struct message_t* msg_tables;
-        if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria");
-            return -1;
-        }
+    if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria");
+        return -1;
+    }
         
-        msg_tables -> opcode = OC_TABLES;
-        msg_tables -> c_type = c_type;
-        msg_tables -> table_num = -1;
+    msg_tables -> opcode = OC_SERVER;
+    msg_tables -> c_type = CT_SZ_TABLES;
+    msg_tables -> table_num = -1;
 
-        char** cnt_keys = msg_tables -> content.keys;
-        if((cnt_keys = (char**) malloc(sizeof(char*)*size)) == NULL)
-            return -1;
+    char** cnt_keys = msg_tables -> content.keys;
+    if((cnt_keys = (char**) malloc(sizeof(char*)*size)) == NULL)
+        return -1;
         
-        int i;
-        for(i = 0; i < size; i++) {
-            if((cnt_keys[i] = strdup(lst_tbls[i])) == NULL) {
-                while(i > 0) {
-                    free(cnt_keys[i]);
-                    i--;
-                }
-                free(cnt_keys);
-                return -1;
+    int i;
+    for(i = 0; i < size; i++) {
+        if((cnt_keys[i] = strdup(lst_tbls[i])) == NULL) {
+            while(i > 0) {
+                free(cnt_keys[i]);
+                i--;
             }
-        }
-}
-
-    struct message_t msg_resposta = network_send_receive(socket, msg_tables);
-        if(msg_resposta == NULL){
-            imprimir_resposta(messgerror ());
-            free(msg_resposta);
+            free(cnt_keys);
             return -1;
         }
+    }
+
+
+    struct message_t msg_resposta = network_send_receive(server, msg_tables);
+    if(msg_resposta == NULL){
+        imprimir_resposta(messgerror ());
+        free(msg_resposta);
+        return -2;
+    }
     imprimir_resposta(msg_resposta);
     free(msg_resposta);
     return 0;
 }
+
+//////////////////////////////////// rtables_ack ////////////////////////////////////////////////////////
+
+int rtables_ack(struct server_t *server) {
+    struct message_t* msg_ack;
+    if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria");
+        return -1;
+    }
+        
+    msg_ack -> opcode = OC_SERVER;
+    msg_ack -> c_type = CT_ACK;
+    msg_ack -> table_num = -1;
+
+        
+    struct message_t msg_resposta = network_send_receive(server, msg_ack);
+    if(msg_resposta == NULL){
+        imprimir_resposta(messgerror ());
+        free(msg_resposta);
+        return -1;
+    }
+    imprimir_resposta(msg_resposta);
+    free(msg_resposta);
+    return 0;
+}
+
+//////////////////////////////////// network_send_receive ////////////////////////////////////////////////////////
 
 struct message_t *network_send_receive(struct server_t *server, struct message_t *msg){
 
@@ -191,6 +222,52 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	return msg_resposta;
 }
 
+/////////////////////////////////// rtables_put /////////////////////////////////////////////////////////
+
+
+int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
+
+    if(rtables == NULL || key == NULL || value == NULL){
+        fprintf(stderr, "Argumentos NULL");
+		return -1;
+    }
+    
+    struct message_t* msg_out;
+    if(rtables-> n_tables<=rtables -> table_num){
+        imprimir_resposta(messgerror ());
+        return -1;
+    }
+
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria");
+        return -1;
+    }
+
+    msg_out -> opcode = OC_PUT;
+    msg_out -> c_type = CT_ENTRY;
+    msg_out -> table_num = rtables->table_num;
+    if((msg_out -> content.entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL) {
+        free(msg_out);
+        return -1;
+    }
+    msg_out -> content.entry -> key = strdup(key);
+    msg_out -> content.entry -> value = data_dup(value);
+    imprimir_resposta(msg_out);
+    struct message_t* msg_resposta;
+    if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
+        fprintf(stderr, "Erro ao enviar/receber mensagem");
+        return -1;
+        
+    }
+    imprimir_resposta(msg_resposta);
+    free_message(msg_resposta);
+    free_message(msg_out);
+    return 0;
+}
+
+
+/////////////////////////////////// shift /////////////////////////////////////////////////////////
+
 void shift(struct pollfd* connects, int i) {
     
     if(connects == NULL || i < 0){
@@ -219,6 +296,8 @@ void shift(struct pollfd* connects, int i) {
     }
 
 }
+
+///////////////////////////////// make_server_socket ///////////////////////////////////////////////////////////
 
 int make_server_socket(short port){
 
@@ -252,6 +331,10 @@ int make_server_socket(short port){
 
     return socket_fd;
 }
+
+
+////////////////////////////////// network_receive_send //////////////////////////////////////////////////////////
+
 /* Função "inversa" da função network_send_receive usada no table-client.
      Neste caso a função implementa um ciclo receive/send:
 
@@ -386,7 +469,7 @@ void quitFunc (){
 
 } 
 
-////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////// server_connect ////////////////////////////////////////////////////
 
 int *server_connect(struct server_t* sec_serv){
 
@@ -441,7 +524,7 @@ int *server_connect(struct server_t* sec_serv){
 	return sec_serv;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////// main ////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
 
@@ -488,30 +571,41 @@ int main(int argc, char **argv){
     }
 
     lista_tabelas[argc-3] = NULL;
-
-    /////////////////////////////////////
     
     int cnt_sec;
 	if(server_connect(secundario) < 0)
         cnt_sec = 0;
     else {
- 
-        if((rtables_sz_tbles(secundario->socket,lista_tabelas,argc-3) == -1) {
-            return-1;
+        int rtbales_sz_res = rtables_sz_tbles(secundario,lista_tabelas,argc-3);
+        if(rtbales_sz_res == -1) {
+            return -1;
         }
-        cnt_sec = 1;
-        struct rtables_t *rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t));
-        rtables -> server = secundario;
-        rtables -> n_tables = nTables;
-        for(i = 0 ; i < nTables;i++){
-            struct entry* lista_entrys= get_tbl_keys(i);
-            rtables -> table_num = 0;
-            while(*lista_entrys!=NULL){
-                rtables_put(rtables, *lista_entrys.key, *lista_entrys.value);
-                lista_entrys++;
+        else if(rtbales_sz_res == -2)
+            secundario -> state = 0;
+        else {
+            cnt_sec = 1;
+            struct rtables_t *rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t));
+            rtables -> server = secundario;
+            rtables -> n_tables = nTables;
+            for(i = 0 ; i < nTables;i++){
+                struct entry* lista_entrys= get_tbl_keys(i);
+                rtables -> table_num = 0;
+                while(*lista_entrys!=NULL){
+                    rtables_put(rtables, *lista_entrys.key, *lista_entrys.value); // n ha if
+                    lista_entrys++;
+                }
+                rtables -> table_num++;
             }
-            rtables -> table_num++;
-      }
+            int rtbales_ack_res = rtables_ack(secundario);
+            if(rtbales_ack_res == -1) {
+                return -1;
+
+            }
+            else if(rtbales_ack_res == -2) {
+                secundario -> state = 0;    
+            }
+
+        }
 
     }
 

@@ -10,6 +10,7 @@
 
 #define SLEEP_TIME 5
 #define MAX_TENTATIVA 4
+
 struct server_t *network_connect(const char *address_port){
 
 	/* Verificar parâmetro da função e alocação de memória */

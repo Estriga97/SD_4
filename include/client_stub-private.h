@@ -9,6 +9,4 @@ struct rtables_t{
     int n_tables;
 };
 
-int rtables_sz_tbles(int socket,char** lst_tbls, int size);
-
 #endif
