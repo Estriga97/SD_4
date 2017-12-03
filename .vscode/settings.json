@@ -1,7 +1,10 @@
 {
     "files.associations": {
         "network_client-private.h": "c",
-        "message-private.h": "c"
+        "message-private.h": "c",
+        "table-private.h": "c",
+        "table_skel-private.h": "c",
+        "primary_backup-private.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

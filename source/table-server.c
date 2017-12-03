@@ -7,28 +7,13 @@
      Uso: table-server <port> <table1_size> [<table2_size> ...]
      Exemplo de uso: ./table_server 54321 10 15 20 25
 */
-#include <error.h>
-#include <signal.h>
-#include <poll.h>
-#include <fcntl.h>
-#include <errno.h>
 
-#include "table_skel.h"
-#include "inet.h"
-#include "table-private.h"
-#include "message-private.h"
-#include "table_skel-private.h"
-#include "primary_backup.h"
-
-#define SOCKETS_NUMBER 6
-
+#include "table_server.h"
 
 static int quit = 0;
 static int nTables;
 static int primario; // 1 = primario, 0 = secundario
 static int secundario_ready = 0;
-
-
 
 //////////////////////////////////// rtables_sz_tbles ////////////////////////////////////////////////////////
 
@@ -471,7 +456,7 @@ void quitFunc (){
 
 //////////////////////////////////////// server_connect ////////////////////////////////////////////////////
 
-int *server_connect(struct server_t* sec_serv){
+int server_connect(struct server_t* sec_serv){
 
 	/* Verificar parâmetro da função e alocação de memória */
 	if(sec_serv = NULL && sec_serv -> port_sev == NULL && sec_serv -> ip_sev == NULL){
@@ -572,6 +557,8 @@ int main(int argc, char **argv){
 
     lista_tabelas[argc-3] = NULL;
     
+    table_skel_init(lista_tabelas);
+
     int cnt_sec;
 	if(server_connect(secundario) < 0)
         cnt_sec = 0;
@@ -582,9 +569,9 @@ int main(int argc, char **argv){
         }
         else if(rtbales_sz_res == -2)
             secundario -> state = 0;
-        else {
+        else { 
             cnt_sec = 1;
-            struct rtables_t *rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t));
+/*             struct rtables_t *rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t));
             rtables -> server = secundario;
             rtables -> n_tables = nTables;
             for(i = 0 ; i < nTables;i++){
@@ -595,7 +582,7 @@ int main(int argc, char **argv){
                     lista_entrys++;
                 }
                 rtables -> table_num++;
-            }
+            } */
             int rtbales_ack_res = rtables_ack(secundario);
             if(rtbales_ack_res == -1) {
                 return -1;
@@ -628,7 +615,7 @@ int main(int argc, char **argv){
             if(getpeername(primario->socket, (struct sockaddr *) &addr, &addr_len)==-1){
 
             }
-            fd = fopen("/home/antonio/c/sd_4/SD_4/source","w");
+            fd = fopen("/home/antonio/c/sd_4/SD_4/source/ip_primario","w");
             fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
             fclose(fp);
             while(!secundario_ready){
@@ -654,105 +641,110 @@ int main(int argc, char **argv){
     nTables = argc - 2;
     signal(SIGPIPE, SIG_IGN);
 
-
-
-table_skel_init(lista_tabelas);
-
-for(i = 0; i < argc-2; i++ ){
-        free(lista_tabelas[i]);
-    }
-free(lista_tabelas);
-
-struct pollfd connections[SOCKETS_NUMBER]; 
-int num_tables = htonl(argc-2);
-int nSockets = 2;
-int net_r_s,res;
-
-for(i = 0; i < SOCKETS_NUMBER; i++){
-    connections[i].fd = -1;
-    connections[i].events = 0;
-    connections[i].revents = 0;
-}
-connections[0].fd = listening_socket;
-connections[0].events = POLLIN;
-connections[1].fd = fileno(stdin);
-connections[1].events = POLLIN; 
-
-while(!quit){ /* espera por dados nos sockets abertos */
-    res = poll(connections, nSockets, -1);
-    if (res < 0){
-        if (errno != EINTR) {
-            quit = 1;
-            }
-        else{
-                continue;
-            }
-}
-    if(connections[0].revents & POLLIN){ /* novo pedido de conexão */
-        int socket_de_cliente;
-        if(nSockets < SOCKETS_NUMBER){
-        if((socket_de_cliente = accept(connections[0].fd,NULL,NULL)) != -1){
-        
-                printf(" * Client is connected!\n");
-                connections[nSockets].fd = socket_de_cliente;
-                connections[nSockets].events = POLLIN;
- 	            res = write_all(socket_de_cliente, (char *) &num_tables, _INT);
-                nSockets++;}
+    for(i = 0; i < argc-2; i++ ){
+            free(lista_tabelas[i]);
         }
-}
-/* um dos sockets de ligação tem dados para ler */
-    i = 1;
-    while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
-        if (connections[i].revents & POLLIN) {
-            if(i == 1){ //stdin
-                char input[1000];
-                fgets(input, 1000, stdin);
-                char spliters[] = " ";
-                input[strlen(input)-1] = '\0';
-                char* comando = strtok(input, spliters);
-                            
-                if(!strcasecmp(comando,"quit")){
+    free(lista_tabelas);
+
+    struct pollfd connections[SOCKETS_NUMBER]; 
+    int num_tables = htonl(argc-2);
+    int nSockets = 3;
+    int net_r_s,res;
+
+    for(i = 0; i < SOCKETS_NUMBER; i++){
+        connections[i].fd = -1;
+        connections[i].events = 0;
+        connections[i].revents = 0;
+    }
+    connections[0].fd = listening_socket;
+    connections[0].events = POLLIN;
+    connections[1].fd = fileno(stdin);
+    connections[1].events = POLLIN;
+    if(primario) {
+        connections[2].fd = secundario -> socket;
+        connections[2].events = POLLIN;
+    }
+    else {
+        connections[2].fd = primario -> socket;
+        connections[2].events = POLLIN;
+    }
+
+
+    while(!quit){ /* espera por dados nos sockets abertos */
+        res = poll(connections, nSockets, -1);
+        if (res < 0){
+            if (errno != EINTR) {
+                quit = 1;
+                }
+            else{
+                    continue;
+                }
+    }
+        if(connections[0].revents & POLLIN){ /* novo pedido de conexão */
+            int socket_de_cliente;
+            if(nSockets < SOCKETS_NUMBER){
+            if((socket_de_cliente = accept(connections[0].fd,NULL,NULL)) != -1){
+            
+                    printf(" * Client is connected!\n");
+                    connections[nSockets].fd = socket_de_cliente;
+                    connections[nSockets].events = POLLIN;
+                    res = write_all(socket_de_cliente, (char *) &num_tables, _INT);
+                    nSockets++;}
+            }
+    }
+    /* um dos sockets de ligação tem dados para ler */
+        i = 1;
+        while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
+            if (connections[i].revents & POLLIN) {
+                if(i == 1){ //stdin
+                    char input[1000];
+                    fgets(input, 1000, stdin);
+                    char spliters[] = " ";
+                    input[strlen(input)-1] = '\0';
+                    char* comando = strtok(input, spliters);
+                                
+                    if(!strcasecmp(comando,"quit")){
+                        quit = 1;
+                    }
+                    else if(!strcasecmp(comando,"print")){
+                        get_keys(atoi(strtok(NULL, spliters)));
+                    }
+                    else{
+                        printf("Comando errado!");
+                    }
+                }
+
+                else if((net_r_s = network_receive_send(connections[i].fd))== -1){
+                    close(connections[i].fd);
+                    connections[i].fd = -1;
+                    connections[i].events = 0;
+                    connections[i].revents = 0;
+                    shift(connections,i);
+                    nSockets--;
+                    printf(" * Client is disconnected!\n");
+                    }
+                else if(net_r_s == -2){
                     quit = 1;
                 }
-                else if(!strcasecmp(comando,"print")){
-                    get_keys(atoi(strtok(NULL, spliters)));
-                }
-                else{
-                    printf("Comando errado!");
-                }
-            }
+            } 
 
-            else if((net_r_s = network_receive_send(connections[i].fd))== -1){
-                close(connections[i].fd);
-                connections[i].fd = -1;
-                connections[i].events = 0;
-                connections[i].revents = 0;
-                shift(connections,i);
-                nSockets--;
-                printf(" * Client is disconnected!\n");
-                }
-            else if(net_r_s == -2){
-                quit = 1;
+            if (connections[i].revents & POLLERR ||connections[i].revents & POLLHUP) {
+            close(connections[i].fd);
+            connections[i].fd = -1;
+            connections[i].events = 0;
+            connections[i].revents = 0;
+            shift(connections,i);
+            nSockets--;
+            printf(" * Client is disconnected!\n");
             }
-        } 
-
-        if (connections[i].revents & POLLERR ||connections[i].revents & POLLHUP) {
-         close(connections[i].fd);
-         connections[i].fd = -1;
-         connections[i].events = 0;
-         connections[i].revents = 0;
-         shift(connections,i);
-         nSockets--;
-         printf(" * Client is disconnected!\n");
-        }
-        i++;
-}
-}
-table_skel_destroy();
-/* fechar as ligações */
-for(i = 0; i < nSockets; i++){
-    close(connections[i].fd);
-}
+            i++;
+    }
+    }
+    table_skel_destroy();
+    /* fechar as ligações */
+    for(i = 0; i < nSockets; i++){
+        close(connections[i].fd);
+    }
 
     return 0;
 }
