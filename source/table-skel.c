@@ -211,14 +211,14 @@ struct message_t* invoke_server_version(struct message_t* msg_pedido){
        case CT_SZ_TABLES:
         if(table_skel_init(msg_pedido.content->keys) == -1)//init
           return NULL;
-        msg_resposta  ->  = OC_TABLES;
+        msg_resposta  -> opcode = OC_TABLES;
         msg_resposta  -> c_type = CT_SZ_TABLES;
         msg_resposta  -> table_num = -1; 
         break;
         case CT_ACK:
         if(table_skel_init(msg_pedido.content->keys) == -1)//init
           return NULL;
-        msg_resposta  ->  = OC_TABLES;
+        msg_resposta  -> opcode = OC_TABLES;
         msg_resposta  -> c_type = CT_ACK;
         msg_resposta  -> table_num = -1;
         break;
@@ -236,7 +236,7 @@ struct entry_t* get_tbl_keys(int n){
     else {
         tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*tbl -> filled+1);
         int i;
-        for(i =  tbl -> datasize-1; i >= 0 && tbl->entrys[i].key ; i--) {
+        for(i =  tbl -> datasize-1; i >= 0 && tbl->entrys[i].key!=NULL ; i--) {
             if((tbl_res[i] = entry_dup(tbl->entrys[i])) == NULL) {
                 while(i > 0) {
                     free(tbl_res[i]);

@@ -457,7 +457,7 @@ int main(int argc, char **argv){
         cnt_sec = 0;
     else {
  
-        if((rtables_sztbles(secundario->socket,lista_tabelas,argc-3) == -1) {
+        if((rtables_sz_tbles(secundario->socket,lista_tabelas,argc-3) == -1) {
             return-1;
         }
         cnt_sec = 1;
@@ -469,12 +469,10 @@ int main(int argc, char **argv){
             rtables -> table_num = 0;
             while(*lista_entrys!=NULL){
                 rtables_put(rtables, *lista_entrys.key, *lista_entrys.value);
-                rtables -> table_num++;
                 lista_entrys++;
             }
-
-
-        }
+            rtables -> table_num++;
+      }
 
     }
 
