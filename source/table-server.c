@@ -456,10 +456,10 @@ void quitFunc (){
 
 //////////////////////////////////////// server_connect ////////////////////////////////////////////////////
 
-int server_connect(struct server_t* sec_serv){
+int server_connect(struct server_t* server){
 
 	/* Verificar parâmetro da função e alocação de memória */
-	if(sec_serv = NULL && sec_serv -> port_sev == NULL && sec_serv -> ip_sev == NULL){
+	if(server = NULL && server -> ip_port){
 		return NULL;
     }
 
@@ -479,8 +479,7 @@ int server_connect(struct server_t* sec_serv){
 		fprintf(stderr, "Erro ao alocar memoria!");
 		return -1;
 	}
-	char* token;
-	fprintf(token, "%d",sec_serv -> ip_sev);
+	char* token = strtok(server -> ip_port, ":");
 
 	addr-> sin_family = AF_INET;
 	if (inet_pton(AF_INET, token, &(addr-> sin_addr)) < 1) {
@@ -488,7 +487,7 @@ int server_connect(struct server_t* sec_serv){
 		return -1;
 		}
 
-	addr-> sin_port = htons(sec_serv -> port_sev);
+	addr-> sin_port = htons(atoi(strtok(NULL,":")));
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		fprintf(stderr, "Erro ao criar socket TCP!");
@@ -530,8 +529,7 @@ int main(int argc, char **argv){
         }
 
         
-        secundario -> id_serv = atoi(strtock(argv[3],":"));
-        secundario -> port_sev = atoi(strtock(NULL,":"));
+        secundario -> ip_port = strdup(argv[3]);
         secundario -> state = 0; // DOWN
     
     char ** lista_tabelas;
@@ -677,19 +675,19 @@ int main(int argc, char **argv){
                 quit = 1;
                 }
             else{
-                    continue;
+                continue;
                 }
     }
         if(connections[0].revents & POLLIN){ /* novo pedido de conexão */
             int socket_de_cliente;
             if(nSockets < SOCKETS_NUMBER){
-            if((socket_de_cliente = accept(connections[0].fd,NULL,NULL)) != -1){
-            
+                if((socket_de_cliente = accept(connections[0].fd,NULL,NULL)) != -1){
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_de_cliente;
                     connections[nSockets].events = POLLIN;
                     res = write_all(socket_de_cliente, (char *) &num_tables, _INT);
-                    nSockets++;}
+                    nSockets++;
+                }
             }
     }
     /* um dos sockets de ligação tem dados para ler */
