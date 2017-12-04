@@ -521,7 +521,7 @@ int main(int argc, char **argv){
     if ((listening_socket = make_server_socket((argv[1]))) < 0) {
         printf("Erro ao criar servidor!");
         return -1;
-}
+    }
 
     if(argc > 2) { //primario
         primario = 1;
@@ -535,7 +535,15 @@ int main(int argc, char **argv){
         
         secundario -> ip_port = strdup(argv[3]);
         secundario -> state = 0; // DOWN
-    
+
+    // criar ficheiro no primario
+    fd = fopen("SD_4/ip_secundario","w");
+    fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
+    fclose(fp);
+    while(!secundario_ready){
+        network_receive_send(primario->socket);
+    }
+
     char ** lista_tabelas;
 
     if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) {
@@ -585,6 +593,10 @@ int main(int argc, char **argv){
         }
 
     }
+    for(i = 0; i < argc-2; i++ ){
+        free(lista_tabelas[i]);
+    }
+    free(lista_tabelas);
 
 
 }
@@ -605,14 +617,13 @@ int main(int argc, char **argv){
             if(getpeername(primario->socket, (struct sockaddr *) &addr, &addr_len)==-1){
 
             }
-            fd = fopen("/home/antonio/c/sd_4/SD_4/source/ip_primario","w");
+            // criar ficheiro no secundario
+            fd = fopen("SD_4/ip_primario","w");
             fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
             fclose(fp);
             while(!secundario_ready){
                 network_receive_send(primario->socket);
             }
-        }
-
         }
         
 
@@ -620,7 +631,7 @@ int main(int argc, char **argv){
 
 ////////////////////////////////////////////////////////////////
 
-    else { // alguem nao sabe chamar a merda dos servidores (estriga?)
+    else {
         printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
         printf("Exemplo de uso: ./server 54321 10 15 20 25\n");
         return -1;
@@ -628,16 +639,11 @@ int main(int argc, char **argv){
 
 ////////////////////////////////////////////////////////////////
 
-    nTables = argc - 2;
+    nTables = argc - 3;
     signal(SIGPIPE, SIG_IGN);
 
-    for(i = 0; i < argc-2; i++ ){
-            free(lista_tabelas[i]);
-        }
-    free(lista_tabelas);
-
     struct pollfd connections[SOCKETS_NUMBER]; 
-    int num_tables = htonl(argc-2);
+    int num_tables = htonl(argc-3);
     int nSockets = 3;
     int net_r_s,res;
 
@@ -665,11 +671,11 @@ int main(int argc, char **argv){
         if (res < 0){
             if (errno != EINTR) {
                 quit = 1;
-                }
+            }
             else{
                 continue;
                 }
-    }
+        }
         if(connections[0].revents & POLLIN){ /* novo pedido de conexão */
             int socket_de_cliente;
             if(nSockets < SOCKETS_NUMBER){

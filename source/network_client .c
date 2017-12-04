@@ -169,23 +169,11 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		
 	*/
 	int size;
-
-	do{
-		if(result = read_all(server->socket,(char*) &size, _INT) ) == -1){
-			sleep(SLEEP_TIME);
-			if(server -> server_type){
-				network_connect(server -> ip_port_secundario);
-				server -> server_type = 0;
-			}
-			else{
-				network_connect(server -> ip_port_primario);
-				server -> server_type = 1;
-			}
-		}
-
-		tentativas++;
-
-	} while(result == -1 && tentativas < MAX_TENTATIVA);
+	i=0;
+	while((result = read_all(server->socket, buff, size) ) == -1 && i!= 1){
+		sleep(SLEEP_TIME);
+		i++;
+	 }
 
 	if(result == -1) {
 		fprintf(stderr, "Erro ao receber o tamanho da mensagem de resposta!");
