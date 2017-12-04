@@ -15,8 +15,8 @@
 #include "primary_backup-private.h"
 
 #define SOCKETS_NUMBER 7
-#define FL_PATH_1 "SD_4/ip_secundario"
-#define FL_PATH_2 "SD_4/ip_primario"
+#define FILE_PATH_1 "SD_4/ip_1"
+#define FILE_PATH_2 "SD_4/ip_2"
 
 struct thread_param_t {
 	struct message_t* msg;

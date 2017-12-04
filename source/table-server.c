@@ -604,14 +604,16 @@ void* pthread_main(void* params) {
 
 int main(int argc, char **argv){
 
-     int listening_socket,i;
+    int listening_socket,i;
+    
+    int file_exist = (file_exist(FILE_PATH_1) || file_exist(FILE_PATH_2));  //ver se complia
 
     if ((listening_socket = make_server_socket((argv[1]))) < 0) {
         printf("Erro ao criar servidor!");
         return -1;
     }
 
-    if(argc > 2) { //primario
+    if(argc > 2 && !file_exist) { //primario
         primario = 1;
 
         server_t o_server;
@@ -619,73 +621,74 @@ int main(int argc, char **argv){
         	fprintf(stderr, "Erro ao preparar o_server!");
         	return -1;
         }
-	    
-    o_server -> ip_port = strdup(argv[3]);
-    o_server -> state = 0; // DOWN
 
-    // criar ficheiro no primario
-    fd = fopen("SD_4/ip_secundario","w");
-    fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
-    fclose(fp);
+        o_server -> ip_port = strdup(argv[3]);
+        o_server -> state = 0; // DOWN
 
-    char ** lista_tabelas;
 
-    if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) {
-        fprintf(stderr, "Erro ao preparar lista_tabelas!");
-        return -1;
-    }
-    
-    for(i = 3; i < argc; i++ ){
-        if((lista_tabelas[i-3] = (char *) malloc(strlen(argv[i])+1)) == NULL) {
-            while(i != 0) {
-                free(lista_tabelas[i-3]);
-                i--;
-            }
-            fprintf(stderr, "Erro ao preparar lista_tabelas[i-2]!");
+        // criar ficheiro no primario
+        fd = fopen("SD_4/ip_1","w");
+        fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
+        fclose(fp);
+
+        char ** lista_tabelas;
+
+        if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) {
+            fprintf(stderr, "Erro ao preparar lista_tabelas!");
             return -1;
         }
-        memcpy(lista_tabelas[i-3],argv[i],strlen(argv[i])+1);
-    }
-
-    lista_tabelas[argc-3] = NULL;
-    
-    table_skel_init(lista_tabelas);
-
-    int cnt_sec;
-	if(server_connect(o_server) < 0)
-        cnt_sec = 0;
-    else {
-        int rtbales_sz_res = rtables_sz_tbles(o_server,lista_tabelas,argc-3);
-        if(rtbales_sz_res == -1) {
-            return -1;
-        }
-        else if(rtbales_sz_res == -2)
-            secundario -> state = 0;
-        else { 
-            cnt_sec = 1;
-            int rtbales_ack_res = rtables_ack(secundario);
-            if(rtbales_ack_res == -1) {
+        
+        for(i = 3; i < argc; i++ ){
+            if((lista_tabelas[i-3] = (char *) malloc(strlen(argv[i])+1)) == NULL) {
+                while(i != 0) {
+                    free(lista_tabelas[i-3]);
+                    i--;
+                }
+                fprintf(stderr, "Erro ao preparar lista_tabelas[i-2]!");
                 return -1;
-
             }
-            else if(rtbales_ack_res == -2) {
-                secundario -> state = 0;    
+            memcpy(lista_tabelas[i-3],argv[i],strlen(argv[i])+1);
+        }
+
+        lista_tabelas[argc-3] = NULL;
+        
+        table_skel_init(lista_tabelas);
+
+        int cnt_sec;
+        if(server_connect(o_server) < 0)
+            cnt_sec = 0;
+        else {
+            int rtbales_sz_res = rtables_sz_tbles(o_server,lista_tabelas,argc-3);
+            if(rtbales_sz_res == -1) {
+                return -1;
+            }
+            else if(rtbales_sz_res == -2)
+                secundario -> state = 0;
+            else { 
+                cnt_sec = 1;
+                int rtbales_ack_res = rtables_ack(secundario);
+                if(rtbales_ack_res == -1) {
+                    return -1;
+
+                }
+                else if(rtbales_ack_res == -2) {
+                    secundario -> state = 0;    
+                }
+
             }
 
         }
+        for(i = 0; i < argc-2; i++ ){
+            free(lista_tabelas[i]);
+        }
+        free(lista_tabelas);
+
 
     }
-    for(i = 0; i < argc-2; i++ ){
-        free(lista_tabelas[i]);
-    }
-    free(lista_tabelas);
-
-
-}
 
 ////////////////////////////////////////////////////////////////
 
-    else if(argc = 2) { //secundario
+    else if(argc = 2){ //secundario
         primario = 0;
         server_t o_server;
         if(o_server = (server_t*) malloc(sizeof(server_t)) == NULL) {
@@ -700,7 +703,7 @@ int main(int argc, char **argv){
 
             }
             // criar ficheiro no secundario
-            fd = fopen("SD_4/ip_primario","w");
+            fd = fopen("SD_4/ip_2","w");
             fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
             fclose(fp);
             while(!secundario_ready){ // secundario_ready ?? estriga?
@@ -711,6 +714,24 @@ int main(int argc, char **argv){
 
     }
 
+
+    else if(file_exist) { //recuperação (como secundario)
+        FILE* fd;
+        struct server_t o_server;
+        char buff_read [MAX_READ];
+        if((o_server = (struct server_t*) malloc(sizeof(struct server_t)) == NULL)) {
+            fprintf(stderr, "Erro ao alocar memoria");
+            //fzr n sei o q neste caso de erro
+        }
+        if(argc  > 2) {
+            fd = fdopen(FILE_PATH_1,"r");
+            fgets(buff_read, MAX_READ, FILE_PATH_1);
+            buff_read[strlen(input)-1] = '\0';
+
+            o_server -> ip_port = strdup(buff_read);
+            o_server -> state = 1;
+        }
+    }
 ////////////////////////////////////////////////////////////////
 
     else {
