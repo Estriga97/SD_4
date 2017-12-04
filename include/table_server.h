@@ -15,10 +15,12 @@
 #include "primary_backup-private.h"
 
 #define SOCKETS_NUMBER 7
+#define FL_PATH_1 "SD_4/ip_secundario"
+#define FL_PATH_2 "SD_4/ip_primario"
 
 struct thread_param_t {
 	struct message_t* msg;
-    struct server_t* svr;
+    struct rtables_t rtbl;
 };
 
 int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int sizE);
