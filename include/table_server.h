@@ -1,3 +1,5 @@
+#ifndef _TABLE_SERVER_H
+#define _TABLE_SERVER_H
 
 #include <error.h>
 #include <signal.h>
@@ -13,6 +15,11 @@
 #include "primary_backup-private.h"
 
 #define SOCKETS_NUMBER 7
+
+struct thread_param_t {
+	struct message_t* msg;
+    struct server_t* svr;
+};
 
 int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int sizE);
 

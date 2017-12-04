@@ -250,8 +250,67 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     return 0;
 }
 
+/////////////////////////////////// rtables_update /////////////////////////////////////////////////////////
 
-/////////////////////////////////// shift /////////////////////////////////////////////////////////
+int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
+    struct message_t* msg_out;
+
+    if(rtables == NULL || key == NULL || value == NULL){
+        fprintf(stderr, "Argumentos NULL");
+		return -1;
+    }
+
+    if(rtables-> n_tables<=rtables -> table_num){
+        imprimir_resposta(messgerror ());
+        return -1;
+    }
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria");
+        return -1;
+    }
+
+    msg_out -> opcode = OC_UPDATE;
+    msg_out -> c_type = CT_ENTRY;
+    msg_out -> table_num = rtables->table_num;
+    if((msg_out -> content.entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL) {
+        free(msg_out);
+        free(msg_out -> content.entry);
+        fprintf(stderr, "Erro ao alocar memoria");
+        return -1;
+    }
+    msg_out -> content.entry -> key = strdup(key);
+    msg_out -> content.entry -> value = data_dup(value);
+    imprimir_resposta(msg_out);
+
+    struct message_t* msg_resposta;
+    if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
+        fprintf(stderr, "Erro ao enviar/receber mensagem");
+        return -1;
+        
+    }
+    imprimir_resposta(msg_resposta);
+    free_message(msg_resposta);
+    free_message(msg_out);
+
+    return 0;
+
+}
+
+///////////////////////////////////  file_exist  /////////////////////////////////////////////////////////
+
+int file_exist(const char* fl_nm) {
+    FILE *file;
+    
+    if (((file = fopen(fl_name, "r")) != NULL) {
+        fclose(file);
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+///////////////////////////////////  shift  /////////////////////////////////////////////////////////
 
 void shift(struct pollfd* connects, int i) {
     
@@ -388,6 +447,9 @@ int network_receive_send(int sockfd){
     if(msg_pedido->table_num == -1){
          if((msg_resposta =invoke_server_version(msg_pedido))==NULL)
             return -2;
+         if(msg_resposta -> c_type == CT_ACK) {
+            secundario_ready = 1;
+         }  
     }
     else if(msg_pedido -> table_num >= nTables){
         msg_resposta = messgerror();
@@ -508,7 +570,33 @@ int server_connect(struct server_t* server){
 	return sec_serv;
 }
 
+//////////////////////////////////////// pthread_main ////////////////////////////////////////////////////
+
+
 void* pthread_main(void* params) {
+    struct thread_param_t *tp = (struct thread_param_t*) params;
+    struct message_t msg_pedido = tp -> msg;
+    int* res;
+    if((res = (int*) malloc(sizeof(int)) == NULL)) {
+        fprintf(stderr, "Erro ao alocar memoria");
+        return NULL;
+    }
+    switch (msg_pedido -> c_type) {
+        case CT_PUT:
+            if(rtables_put(tp -> rtbl, msg_pedido.content -> key, msg_pedido.content -> data) == -1) {
+                fprintf(stderr, "Erro do sec ao fzr o put");
+                return NULL;
+            }
+        break;
+        case CT_UPDATE:
+            if(rtables_update(tp -> rtbl, msg_pedido.content -> key, msg_pedido.content -> data) == -1) {
+                fprintf(stderr, "Erro do sec ao fzr o update");
+                return NULL;
+            }
+        break;
+    }
+    *res = 0
+    return res;
 
 }
 
