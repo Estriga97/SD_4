@@ -526,23 +526,19 @@ int main(int argc, char **argv){
     if(argc > 2) { //primario
         primario = 1;
 
-        server_t secundario;
-        if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
-        	fprintf(stderr, "Erro ao preparar server primario!");
+        server_t o_server;
+        if(o_server = (server_t*) malloc(sizeof(server_t)) == NULL) {
+        	fprintf(stderr, "Erro ao preparar o_server!");
         	return -1;
         }
-
-        
-        secundario -> ip_port = strdup(argv[3]);
-        secundario -> state = 0; // DOWN
+	    
+    o_server -> ip_port = strdup(argv[3]);
+    o_server -> state = 0; // DOWN
 
     // criar ficheiro no primario
     fd = fopen("SD_4/ip_secundario","w");
     fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
     fclose(fp);
-    while(!secundario_ready){
-        network_receive_send(primario->socket);
-    }
 
     char ** lista_tabelas;
 
@@ -557,11 +553,9 @@ int main(int argc, char **argv){
                 free(lista_tabelas[i-3]);
                 i--;
             }
-
             fprintf(stderr, "Erro ao preparar lista_tabelas[i-2]!");
             return -1;
         }
-
         memcpy(lista_tabelas[i-3],argv[i],strlen(argv[i])+1);
     }
 
@@ -570,10 +564,10 @@ int main(int argc, char **argv){
     table_skel_init(lista_tabelas);
 
     int cnt_sec;
-	if(server_connect(secundario) < 0)
+	if(server_connect(o_server) < 0)
         cnt_sec = 0;
     else {
-        int rtbales_sz_res = rtables_sz_tbles(secundario,lista_tabelas,argc-3);
+        int rtbales_sz_res = rtables_sz_tbles(o_server,lista_tabelas,argc-3);
         if(rtbales_sz_res == -1) {
             return -1;
         }
@@ -605,24 +599,24 @@ int main(int argc, char **argv){
 
     else if(argc = 2) { //secundario
         primario = 0;
-        server_t primario;
-        if(secundario = (server_t*) malloc(sizeof(server_t)) == NULL) {
-            fprintf(stderr, "Erro ao preparar server primario!");
+        server_t o_server;
+        if(o_server = (server_t*) malloc(sizeof(server_t)) == NULL) {
+            fprintf(stderr, "Erro ao preparar o_server!");
             return -1;
         }
-        if((primario->socket = accept(listening_socket,NULL,NULL)) != -1){
+        if((o_server -> socket = accept(listening_socket,NULL,NULL)) != -1){
             struct sockaddr_in addr;
             FILE* fd;
             int addr_len = sizeof(addr);
-            if(getpeername(primario->socket, (struct sockaddr *) &addr, &addr_len)==-1){
+            if(getpeername(o_server -> socket, (struct sockaddr *) &addr, &addr_len)==-1){
 
             }
             // criar ficheiro no secundario
             fd = fopen("SD_4/ip_primario","w");
             fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
             fclose(fp);
-            while(!secundario_ready){
-                network_receive_send(primario->socket);
+            while(!secundario_ready){ // secundario_ready ?? estriga?
+                network_receive_send(o_server->socket);
             }
         }
         
@@ -656,15 +650,8 @@ int main(int argc, char **argv){
     connections[0].events = POLLIN;
     connections[1].fd = fileno(stdin);
     connections[1].events = POLLIN;
-    if(primario) {
-        connections[2].fd = secundario -> socket;
-        connections[2].events = POLLIN;
-    }
-    else {
-        connections[2].fd = primario -> socket;
-        connections[2].events = POLLIN;
-    }
-
+    connections[2].fd = o_server -> socket; // tem de ser adaptado??
+    connections[2].events = POLLIN;
 
     while(!quit){ /* espera por dados nos sockets abertos */
         res = poll(connections, nSockets, -1);
@@ -684,10 +671,10 @@ int main(int argc, char **argv){
                     int addr_len2 = sizeof(addr2);
                     if(getpeername(socket_client, (struct sockaddr *) &addr2, &addr_len2) == -1) // a confirmar connect_ip
                         return -1;
-                    long connect_ip = htonl(atol(strtok(secundario -> ip_port, ":")));
+                    long connect_ip = htonl(atol(strtok(o_server -> ip_port, ":")));
                     if(conect_ip == addr2 -> sin_addr.s_addr) {
                         struct rtables_t *rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t));
-                        rtables -> server = secundario;
+                        rtables -> server = o_server; // n tem de ser adaptado?? o server recebido no rtables?
                         rtables -> n_tables = nTables;
                         for(i = 0 ; i < nTables;i++){
                             struct entry* lista_entrys= get_tbl_keys(i);
@@ -703,7 +690,7 @@ int main(int argc, char **argv){
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_de_cliente;
                     connections[nSockets].events = POLLIN;
-                    res = write_all(socket_de_cliente, (char *) &num_tables, _INT);
+                    res = write_all(socket_de_cliente, (char *) &num_tables, _INT); // donde vem este write all?
                     nSockets++;
                 }
             }
@@ -718,7 +705,7 @@ int main(int argc, char **argv){
                     char spliters[] = " ";
                     input[strlen(input)-1] = '\0';
                     char* comando = strtok(input, spliters);
-                                
+                    
                     if(!strcasecmp(comando,"quit")){
                         quit = 1;
                     }
@@ -740,7 +727,7 @@ int main(int argc, char **argv){
                     printf(" * Client is disconnected!\n");
                     }
                 else if(net_r_s == -2){
-                    quit = 1;
+                    quit = 1; // mudar para mensagem de insucesso
                 }
             } 
 
