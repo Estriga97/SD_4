@@ -17,7 +17,7 @@ static int secundario_ready = 0;
 
 //////////////////////////////////// rtables_sz_tbles ////////////////////////////////////////////////////////
 
-int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int sizE) {
+int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int size) {
     struct message_t* msg_tables;
     if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
         fprintf(stderr, "Erro ao alocar memoria");
@@ -49,9 +49,11 @@ int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int sizE) {
     if(msg_resposta == NULL){
         imprimir_resposta(messgerror ());
         free(msg_resposta);
+        free_message(msg_tables);
         return -2;
     }
     imprimir_resposta(msg_resposta);
+    free_message(msg_tables);
     free(msg_resposta);
     return 0;
 }
@@ -74,10 +76,12 @@ int rtables_ack(struct server_t *server) {
     if(msg_resposta == NULL){
         imprimir_resposta(messgerror ());
         free(msg_resposta);
+        free_message(msg_tables);
         return -1;
     }
     imprimir_resposta(msg_resposta);
     free(msg_resposta);
+    free(msg_tables);
     return 0;
 }
 
@@ -583,13 +587,13 @@ void* pthread_main(void* params) {
     switch (msg_pedido -> c_type) {
         case CT_PUT:
             if(rtables_put(tp -> rtbl, msg_pedido.content -> key, msg_pedido.content -> data) == -1) {
-                fprintf(stderr, "Erro do sec ao fzr o put");
+                fprintf(stderr, "Erro do secundario ao fazer o put");
                 return NULL;
             }
         break;
         case CT_UPDATE:
             if(rtables_update(tp -> rtbl, msg_pedido.content -> key, msg_pedido.content -> data) == -1) {
-                fprintf(stderr, "Erro do sec ao fzr o update");
+                fprintf(stderr, "Erro do secundario ao fazer o update");
                 return NULL;
             }
         break;
@@ -718,7 +722,8 @@ int main(int argc, char **argv){
             //*
             }
         }
-        
+
+        free(addr);
 
     }
 
@@ -823,7 +828,7 @@ int main(int argc, char **argv){
                             rtables -> table_num++;
                         }
                     }
-
+                    free(rtables);
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_de_cliente;
                     connections[nSockets].events = POLLIN;
@@ -885,6 +890,8 @@ int main(int argc, char **argv){
     for(i = 0; i < nSockets; i++){
         close(connections[i].fd);
     }
+
+    free(o_server);
 
     return 0;
 }
