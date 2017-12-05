@@ -14,7 +14,16 @@ int hello(struct server_t *server) {
 */
 int update_state(struct server_t *server) {
     hello(server);
-
-    return hello(server);
+    int* ack;
+        if((ack = (int*) malloc(sizeof(int))) == NULL) {
+            //*
+        }
+    *ack = 0;
+    int res;
+    while(!*ack){ 
+        if(res = (network_receive_send(o_server->socket, ack)))
+            return -1;
+    }
+    return res;
 
 }

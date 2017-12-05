@@ -388,7 +388,7 @@ int make_server_socket(short port){
     
     -1 se o cliente se desconectou, -2 se ocorreu um erro
 */
-int network_receive_send(int sockfd){
+int network_receive_send(int sockfd, int* ack){
 
     /* Verificar parâmetros de entrada */
     if(sockfd == -1) {
@@ -448,7 +448,7 @@ int network_receive_send(int sockfd){
          if((msg_resposta =invoke_server_version(msg_pedido))==NULL)
             return -2;
          if(msg_resposta -> c_type == CT_ACK) {
-            secundario_ready = 1;
+            *ack = 1;
          }
     }
     else if(msg_pedido -> table_num >= nTables){
@@ -713,6 +713,10 @@ int main(int argc, char **argv){
             fprintf(fd,"%s", o_server -> ip_port);
             fclose(fp);
 
+            int err = update_state(o_server);
+            if(err) {
+            //*
+            }
         }
         
 
@@ -850,7 +854,7 @@ int main(int argc, char **argv){
                     }
                 }
 
-                else if((net_r_s = network_receive_send(connections[i].fd))== -1){
+                else if((net_r_s = network_receive_send(connections[i].fd), NULL)== -1){
                     close(connections[i].fd);
                     connections[i].fd = -1;
                     connections[i].events = 0;
