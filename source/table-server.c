@@ -449,7 +449,7 @@ int network_receive_send(int sockfd, int* ack){
 
     /* Processar a mensagem */
     if(msg_pedido->table_num == -1){
-         if((msg_resposta =invoke_server_version(msg_pedido))==NULL)
+         if((msg_resposta = invoke_server_version(msg_pedido))==NULL)
             return -2;
          if(msg_resposta -> c_type == CT_ACK) {
             *ack = 1;
@@ -460,7 +460,33 @@ int network_receive_send(int sockfd, int* ack){
         fprintf(stderr, "Erro devido a inexistência de Tabela!");
     }
     else{
-        msg_resposta = invoke(msg_pedido);
+        msg_resposta = invoke(msg_pedido); //*
+        
+        pthread_t nova;
+        struct thread_parameters pthread_p;
+        pthread_p -> msg = msg_pedido;
+
+        struct rtables_t* rtables;
+        struct server_t* server;
+        if((rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t))) == NULL) {
+            //*
+        }
+        if((server = (struct server*) malloc(sizeof(struct server_t))) == NULL) {
+            //*
+        }
+        server -> socket = sockfd;
+        rtables -> server = server;
+        rtables -> n_tables = nTables;
+        rtables -> table_num = msg_pedido -> table_num;
+        pthread_p -> msg = msg_pedido;
+        pthread_p -> rtbl = rtables;
+
+        if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
+		    perror("Thread não criada.");
+        }
+        if (pthread_join(nova, (void **) &r) != 0){
+		    perror("Erro no join.");
+	    }
     }
 
     imprimir_resposta(msg_resposta);
@@ -619,7 +645,7 @@ int main(int argc, char **argv){
     if(argc > 2 && !file_exist) { //primario
         primario = 1;
 
-        struct server_t o_server;
+        struct server_t* o_server;
         if(o_server = (struct server_t*) malloc(sizeof(struct server_t)) == NULL) {
         	fprintf(stderr, "Erro ao preparar o_server!");
         	return -1;
@@ -692,8 +718,8 @@ int main(int argc, char **argv){
 
     else if(argc == 2 && !file_exist){ //secundario
         primario = 0;
-        struct server_t o_server;
-        if(o_server = (server_t*) malloc(sizeof(server_t)) == NULL) {
+        struct server_t* o_server;
+        if(o_server = (struct server_t*) malloc(sizeof(server_t)) == NULL) {
             fprintf(stderr, "Erro ao preparar o_server!");
             return -1;
         }
@@ -712,7 +738,7 @@ int main(int argc, char **argv){
                 fprintf(o_server -> ip_port,"%lu:%hu",ntohl(addr-> sin_addr -> s_addr) ,ntohs(addr-> sin_port);
                 o_server -> state = 1;
             }
-            // criar ficheiro no secundario
+            // criar ficheiro no secundario sobre o primario
             fd = fopen("SD_4/ip_2","w");
             fprintf(fd,"%s", o_server -> ip_port);
             fclose(fp);
@@ -731,7 +757,7 @@ int main(int argc, char **argv){
 
     else if(file_exist) { //recuperação (como secundario)
         FILE* fd;
-        struct server_t o_server;
+        struct server_t* o_server;
         char buff_read [MAX_READ];
         if((o_server = (struct server_t*) malloc(sizeof(struct server_t)) == NULL)) {
             fprintf(stderr, "Erro ao alocar memoria");
@@ -754,15 +780,12 @@ int main(int argc, char **argv){
             o_server -> state = 1;
         }
 
-        if(server_connect(o_server) < 0)
+        if(update_state(o_server) < 0)
             o_server -> state = 0;
         else {
             o_server -> state = 1;
-            
-
             }
         }
-
 
     }
 ////////////////////////////////////////////////////////////////
@@ -869,9 +892,9 @@ int main(int argc, char **argv){
                     printf(" * Client is disconnected!\n");
                     }
                 else if(net_r_s == -2){
-                    quit = 1; // mudar para mensagem de insucesso
+                   //* quit = 1; // mudar para mensagem de insucesso
                 }
-            } 
+            }
 
             if (connections[i].revents & POLLERR ||connections[i].revents & POLLHUP) {
             close(connections[i].fd);

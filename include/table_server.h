@@ -20,7 +20,7 @@
 
 struct thread_param_t {
 	struct message_t* msg;
-    struct rtables_t rtbl;
+    struct rtables_t* rtbl;
 };
 
 int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int sizE);
