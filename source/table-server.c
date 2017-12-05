@@ -23,7 +23,7 @@ int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int sizE) {
         fprintf(stderr, "Erro ao alocar memoria");
         return -1;
     }
-        
+    
     msg_tables -> opcode = OC_SERVER;
     msg_tables -> c_type = CT_SZ_TABLES;
     msg_tables -> table_num = -1;
@@ -449,7 +449,7 @@ int network_receive_send(int sockfd){
             return -2;
          if(msg_resposta -> c_type == CT_ACK) {
             secundario_ready = 1;
-         }  
+         }
     }
     else if(msg_pedido -> table_num >= nTables){
         msg_resposta = messgerror();
@@ -562,12 +562,11 @@ int server_connect(struct server_t* server){
 		close(sockfd);
 		return -1;
 }
-	/* Se a ligação não foi estabelecida, retornar NULL */
-    sec_serv -> socket = sockfd;
-    sec_serv -> state = 1;
+    server -> socket = sockfd;
+    server -> state = 1;
 
 	free(addr);
-	return sec_serv;
+	return 0;
 }
 
 //////////////////////////////////////// pthread_main ////////////////////////////////////////////////////
@@ -616,8 +615,8 @@ int main(int argc, char **argv){
     if(argc > 2 && !file_exist) { //primario
         primario = 1;
 
-        server_t o_server;
-        if(o_server = (server_t*) malloc(sizeof(server_t)) == NULL) {
+        struct server_t o_server;
+        if(o_server = (struct server_t*) malloc(sizeof(struct server_t)) == NULL) {
         	fprintf(stderr, "Erro ao preparar o_server!");
         	return -1;
         }
@@ -628,7 +627,7 @@ int main(int argc, char **argv){
 
         // criar ficheiro no primario
         fd = fopen("SD_4/ip_1","w");
-        fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
+        fprintf(fd,"%s", o_server -> ip_port);
         fclose(fp);
 
         char ** lista_tabelas;
@@ -654,66 +653,72 @@ int main(int argc, char **argv){
         
         table_skel_init(lista_tabelas);
 
-        int cnt_sec;
+
         if(server_connect(o_server) < 0)
-            cnt_sec = 0;
+            o_server -> state = 0;
         else {
+            o_server -> state = 1;
             int rtbales_sz_res = rtables_sz_tbles(o_server,lista_tabelas,argc-3);
             if(rtbales_sz_res == -1) {
+                o_server -> state = 0;
                 return -1;
             }
             else if(rtbales_sz_res == -2)
                 secundario -> state = 0;
-            else { 
-                cnt_sec = 1;
+            else {
                 int rtbales_ack_res = rtables_ack(secundario);
                 if(rtbales_ack_res == -1) {
+                    o_server -> state = 0;
                     return -1;
-
                 }
                 else if(rtbales_ack_res == -2) {
                     secundario -> state = 0;    
                 }
-
             }
-
         }
+
         for(i = 0; i < argc-2; i++ ){
             free(lista_tabelas[i]);
         }
         free(lista_tabelas);
 
-
     }
 
 ////////////////////////////////////////////////////////////////
 
-    else if(argc = 2){ //secundario
+    else if(argc == 2 && !file_exist){ //secundario
         primario = 0;
-        server_t o_server;
+        struct server_t o_server;
         if(o_server = (server_t*) malloc(sizeof(server_t)) == NULL) {
             fprintf(stderr, "Erro ao preparar o_server!");
             return -1;
         }
         if((o_server -> socket = accept(listening_socket,NULL,NULL)) != -1){
-            struct sockaddr_in addr;
-            FILE* fd;
+            struct sockaddr_in* addr;
             int addr_len = sizeof(addr);
+            if((addr = (struct sockaddr_in*) malloc(addr_len)) == NULL) {
+                // erro
+                return -1;
+            }
+            FILE* fd;
             if(getpeername(o_server -> socket, (struct sockaddr *) &addr, &addr_len)==-1){
-
+                // n conseguiu encontrar o nome do server_prim
+            }
+            else {
+                fprintf(o_server -> ip_port,"%lu:%hu",ntohl(addr-> sin_addr -> s_addr) ,ntohs(addr-> sin_port);
+                o_server -> state = 1;
             }
             // criar ficheiro no secundario
             fd = fopen("SD_4/ip_2","w");
-            fprintf(fd,"%lu:%hu",addr-> sin_addr,addr-> sin_port);
+            fprintf(fd,"%s", o_server -> ip_port);
             fclose(fp);
-            while(!secundario_ready){ // secundario_ready ?? estriga?
-                network_receive_send(o_server->socket);
-            }
+
         }
         
 
     }
 
+////////////////////////////////////////////////////////////////
 
     else if(file_exist) { //recuperação (como secundario)
         FILE* fd;
@@ -724,13 +729,32 @@ int main(int argc, char **argv){
             //fzr n sei o q neste caso de erro
         }
         if(argc  > 2) {
-            fd = fdopen(FILE_PATH_1,"r");
-            fgets(buff_read, MAX_READ, FILE_PATH_1);
+            fd = fdopen(FILE_PATH_1,"r"); // *
+            fgets(buff_read, MAX_READ, FILE_PATH_1); // *
             buff_read[strlen(input)-1] = '\0';
 
-            o_server -> ip_port = strdup(buff_read);
+            o_server -> ip_port = strdup(buff_read); //*
             o_server -> state = 1;
         }
+        else if(argc = 2){
+            fd = fdopen(FILE_PATH_2,"r"); // *
+            fgets(buff_read, MAX_READ, FILE_PATH_2); //fzr if's à postriori *
+            buff_read[strlen(input)-1] = '\0';
+
+            o_server -> ip_port = strdup(buff_read); //*
+            o_server -> state = 1;
+        }
+
+        if(server_connect(o_server) < 0)
+            o_server -> state = 0;
+        else {
+            o_server -> state = 1;
+            
+
+            }
+        }
+
+
     }
 ////////////////////////////////////////////////////////////////
 
@@ -740,7 +764,7 @@ int main(int argc, char **argv){
         return -1;
     }
 
-////////////////////////////////////////////////////////////////
+////////////////////////main de ambos (aqui começa a ação)///////////////////////////////////
 
     nTables = argc - 3;
     signal(SIGPIPE, SIG_IGN);

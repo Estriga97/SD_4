@@ -13,6 +13,8 @@ int hello(struct server_t *server) {
 * Retorna 0 em caso de sucesso e -1 em caso de insucesso.
 */
 int update_state(struct server_t *server) {
-    return rtables_ack(server);
+    hello(server);
+
+    return hello(server);
 
 }
