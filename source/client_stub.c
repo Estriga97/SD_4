@@ -49,8 +49,12 @@ int rtables_unbind(struct rtables_t *rtables){
 		return -1;
     }
 
-    if(network_close(rtables -> server))
+    if(network_close(rtables -> server)){
+        fprintf(stderr, "Falha a fechar o servidor!");
         return -1;
+    }
+    
+    free(rtables -> server);
     return 0;
 }
 
@@ -223,6 +227,7 @@ int rtables_size(struct rtables_t *rtables){
     return size;
 
 }
+
 
 int rtables_collisions(struct rtables_t *rtables){
     struct message_t* msg_out;

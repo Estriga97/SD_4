@@ -30,37 +30,6 @@ int main(int argc, char **argv){
 	    
 	char input [MAX_READ];
 	signal(SIGPIPE, SIG_IGN);
-	int tentativas = 0;
-
-		//tentar as conecçoes ao servidor principal seguido do servidor secundario
-	do {
-		if(tentativas > 0){
-			fprintf(stderr, "Tentar ligaçao outra vez!");
-			sleep(RETRY_TIME);
-		}
-			/* Usar network_connect para estabelcer ligação ao servidor principal */
-			if((rtables = rtables_bind(argv[1])) == NULL){
-				fprintf(stderr, "Erro a establecer ligaçao ao servidor principal!");
-			}		
-			else{
-				rtables -> server -> server_type = 1;
-				fprintf(stderr, "Ligado ao servidor principal.");
-			}
-
-			/* Usar network_connect para estabelcer ligação ao servidor secundario */
-			if((rtables == NULL && rtables = rtables_bind(argv[2])) == NULL){
-				fprintf(stderr, "Erro a establecer ligaçao ao servidor secundario!");
-			}
-			else{
-				rtables -> server -> server_type = 0;
-				fprintf(stderr, "Ligado ao servidor secundario.");
-			}
-			tentativas++;
-	}
-	while(tentativas < MAX_TENTATIVA && rtables == NULL );
-
-	rtables -> server -> ip_port_primario = strdup(argv[1]);
-	rtables -> server -> ip_port_secundario = strdup(argv[2]);
 
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
@@ -68,6 +37,40 @@ int main(int argc, char **argv){
  	while (condicao){
 
 		printf(">>> "); // Mostrar a prompt para inserção de comando
+
+		if(rtables -> server == NULL){
+
+			int tentativas = 0;
+			//tentar as conecçoes ao servidor principal seguido do servidor secundario
+			do {
+				if(tentativas > 0){
+					fprintf(stderr, "Tentar ligaçao outra vez!");
+					sleep(RETRY_TIME);
+				}
+					/* Usar network_connect para estabelcer ligação ao servidor principal */
+					if((rtables = rtables_bind(argv[1])) == NULL){
+						fprintf(stderr, "Erro a establecer ligaçao ao servidor principal!");
+					}		
+					else{
+						rtables -> server -> server_type = 1;
+						fprintf(stderr, "Ligado ao servidor principal.");
+					}
+
+					/* Usar network_connect para estabelcer ligação ao servidor secundario */
+					if((rtables == NULL && rtables = rtables_bind(argv[2])) == NULL){
+						fprintf(stderr, "Erro a establecer ligaçao ao servidor secundario!");
+					}
+					else{
+						rtables -> server -> server_type = 0;
+						fprintf(stderr, "Ligado ao servidor secundario.");
+					}
+					tentativas++;
+			}
+			while(tentativas < MAX_TENTATIVA && rtables == NULL );
+
+			rtables -> server -> ip_port_primario = strdup(argv[1]);
+			rtables -> server -> ip_port_secundario = strdup(argv[2]);
+		}
 		
 		/* Receber o comando introduzido pelo utilizador
 		   Sugestão: usar fgets de stdio.h
@@ -87,7 +90,6 @@ int main(int argc, char **argv){
 		if(!strcasecmp(comando,"quit")){
 			condicao = 0;
 			rtables_unbind(rtables);
-			free(rtables -> server);
 			free(rtables);
 		}
 
@@ -124,10 +126,15 @@ int main(int argc, char **argv){
 				memcpy(value -> data, data, strlen(data));
 				value -> datasize = strlen(data);
 
-				rtables_put(rtables, key,value);
-				free(key);
-				free(value-> data);
-				free(value);
+				if(rtables_put(rtables, key,value) == -1){
+					fprintf(stderr, "Erro no commando put!");
+					rtables_unbind(rtables);
+				}
+				else{
+					free(key);
+					free(value-> data);
+					free(value);
+				}
 			}
 
 			else if(!strcasecmp(comando, "get")){
@@ -137,15 +144,27 @@ int main(int argc, char **argv){
 
 				if(!strcmp((key_aux = strtok(NULL, spliters)),"*")){
 					char** keys = rtables_get_keys(rtables);
-					rtables_free_keys(keys);
+					if(keys == NULL){
+						fprintf(stderr, "Erro no commando get!");
+						rtables_unbind(rtables);
+					}
+					else{
+						rtables_free_keys(keys);
+					}
 				}
 
 				else{
 					key = strdup(key_aux);
 					struct data_t* datatemp = rtables_get(rtables, key);
-					free(datatemp -> data);
-					free(datatemp);
-					free(key);
+					if(datatemp == NULL){
+						fprintf(stderr, "Erro no commando get!");
+						rtables_unbind(rtables);
+					}
+					else{
+						free(datatemp -> data);
+						free(datatemp);
+						free(key);
+					}
 				}
 			}
 
@@ -172,21 +191,35 @@ int main(int argc, char **argv){
 				memcpy(value -> data, data, strlen(data));
 				value -> datasize = strlen(data);
 
-				rtables_update(rtables, key,value);
-				free(key);
-				free(value -> data);
-				free(value);
+				if(rtables_update(rtables, key,value) == NULL){
+					fprintf(stderr, "Erro no commando uptade!");
+					rtables_unbind(rtables);
+				}
+				else{
+					free(key);
+					free(value -> data);
+					free(value);
+				}
 			}
 
 			else if(!strcasecmp(comando, "size")){
 				rtables->table_num = atoi(strtok(NULL, spliters));
-				rtables_size(rtables);
+
+				if(rtables_size(rtables) == -1){
+					fprintf(stderr, "Erro no commando size!");
+					rtables_unbind(rtables);
+				}
+				
 			}
 
 			else if(!strcasecmp(comando, "collisions")){
 				rtables->table_num = atoi(strtok(NULL, spliters));
-				rtables_collisions(rtables);
+				if(rtables_collisions(rtables){
+					fprintf(stderr, "Erro no commando collisions!");
+					rtables_unbind(rtables);
+				}
 			}
+			
 			else{
 				printf("Comando errado!\n");				
 
