@@ -190,63 +190,70 @@ struct message_t *invoke(struct message_t *msg_in){
 
       }
 void get_keys(int n){
-      if(n >= 0 && n < n_tabelas){
+    if(n >= 0 && n < n_tabelas){
         print_tables(tabelas[n]);
-      }
-      
-      else{
+    }      
+    else{
         fprintf(stderr, "Tamanho do argumento errado!");
-      }
     }
-    
+}   
 
 struct message_t* invoke_server_version(struct message_t* msg_pedido){
 
     struct message_t* msg_resposta;
-    if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)) == NULL)
+    if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t))) == NULL)
         return NULL;
     
-    short c_type = msg_pedido->opcode
+    short c_type = msg_pedido->opcode;
     switch (c_type) {
         case CT_SZ_TABLES:
-            if(table_skel_init(msg_pedido.content->keys) == -1)//init
+            if(table_skel_init(msg_pedido -> content.keys) == -1)//init
                 return NULL;
-            msg_resposta  -> opcode = OC_TABLES;
+            msg_resposta  -> opcode = OC_SERVER;
             msg_resposta  -> c_type = CT_SZ_TABLES;
             msg_resposta  -> table_num = -1; 
         break;
         case CT_ACK:
-            if(table_skel_init(msg_pedido.content->keys) == -1)//init
+            if(table_skel_init(msg_pedido -> content.keys) == -1)//init
             return NULL;
-            msg_resposta  -> opcode = OC_TABLES;
+            msg_resposta  -> opcode = OC_SERVER;
             msg_resposta  -> c_type = CT_ACK;
             msg_resposta  -> table_num = -1;
         break;
-
-    return msg_resposta;
-
     }
 
-struct entry_t* get_tbl_keys(int n){
+    return msg_resposta;
+    
+}
+
+struct entry_t* get_tbl_keys(int n) {
     struct table_t* tbl = tabelas[n];
     struct entry_t* tbl_res;
+    struct entry_t* entry_aux; 
+    struct entry_t* table_init;
     if(tbl -> filled == 0) {
         return NULL;
     }
     else {
-        tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*tbl -> filled+1);
+        tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*(tbl -> filled+1));
+        table_init = tbl_res;
         int i;
-        for(i =  tbl -> datasize-1; i >= 0 && tbl->entrys[i].key!=NULL ; i--) {
-            if((tbl_res[i] = entry_dup(tbl->entrys[i])) == NULL) {
-                while(i > 0) {
-                    free(tbl_res[i]);
-                    i--;
+        for(i = tbl -> datasize - 1; i >= 0 && tbl -> entrys[i].key!=NULL ; i--) {
+            if((entry_aux = entry_dup(&(tbl -> entrys[i]))) == NULL) {
+                while(i < (tbl -> filled)) {
+                    free(tbl_res);
+                    tbl_res--;
+                    i++;
                 }
-                free(tbl_res);
-                return NULL;    
-              }
-        
-           }
-        tbl_res[tbl -> filled] = NULL;
-        return tbl_res;
+                free(table_init);
+                return NULL;
+            }
+            memcpy(tbl_res,entry_aux,sizeof(struct entry_t));
+            tbl_res++;
+        }
+        tbl_res++;
+        tbl_res -> key = NULL;
+        return table_init;
+    }
+
 }

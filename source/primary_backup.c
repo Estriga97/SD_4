@@ -28,7 +28,7 @@ int update_state(struct server_t *server) {
     *ack = 0;
 
     while(!*ack) {
-        if((res = network_receive_send(o_server->socket, ack)) < 0)
+        if((res = network_receive_send(server->socket, ack)) < 0)
             return -1;
     }
         
