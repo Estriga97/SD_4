@@ -31,6 +31,8 @@ int update_state(struct server_t *server) {
         if((res = network_receive_send(o_server->socket, ack)) < 0)
             return -1;
     }
-    return res;
+        
+    free(*ack);
 
+    return res;
 }

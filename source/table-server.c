@@ -390,6 +390,8 @@ int make_server_socket(short port){
 	Recebe um pedido;
 	Aplica o pedido na tabela;
     Envia a resposta.
+
+    o argumento int* ack serve para receber um ack    
     
     -1 se o cliente se desconectou, -2 se ocorreu um erro
 */
@@ -469,11 +471,15 @@ int network_receive_send(int sockfd, int* ack){
 
         struct rtables_t* rtables;
         struct server_t* server;
+        int* r;
         if((rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t))) == NULL) {
-            //*
+            fprintf(stderr, "Erro ao alocar memoria");
         }
         if((server = (struct server*) malloc(sizeof(struct server_t))) == NULL) {
-            //*
+            fprintf(stderr, "Erro ao alocar memoria");
+        }
+        if((r = (int*) malloc(sizeof(int))) == NULL) {
+            fprintf(stderr, "Erro ao alocar memoria");
         }
         server -> socket = sockfd;
         rtables -> server = server;
@@ -483,11 +489,20 @@ int network_receive_send(int sockfd, int* ack){
         pthread_p -> rtbl = rtables;
 
         if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
-		    perror("Thread não criada.");
+		    fprintf(stderr, "Thread não criada.");
         }
+
         if (pthread_join(nova, (void **) &r) != 0){
-		    perror("Erro no join.");
-	    }
+		    fprintf(stderr, "Erro no join.");
+        }
+        if(*r != 0) {
+            *ack = 1;
+        }
+
+        free(server);
+        free(rtables);
+        free(r);
+
     }
 
     imprimir_resposta(msg_resposta);
@@ -732,12 +747,12 @@ int main(int argc, char **argv){
             struct sockaddr_in* addr;
             int addr_len = sizeof(addr);
             if((addr = (struct sockaddr_in*) malloc(addr_len)) == NULL) {
-                // erro
+                fprintf(stderr, "Erro ao alocar memoria");
                 return -1;
             }
             FILE* fd;
             if(getpeername(o_server -> socket, (struct sockaddr *) &addr, &addr_len)==-1){
-                // n conseguiu encontrar o nome do server_prim
+                fprintf(stderr, "Erro ao encontrar server primario");
             }
             else {
                 fprintf(o_server -> ip_port,"%lu:%hu",ntohl(addr-> sin_addr -> s_addr) ,ntohs(addr-> sin_port);
@@ -750,7 +765,7 @@ int main(int argc, char **argv){
 
             int err = update_state(o_server);
             if(err) {
-            //*
+                fprintf(stderr, "Erro ao atualizar tabelas");
             }
         }
 
@@ -773,20 +788,19 @@ int main(int argc, char **argv){
             fgets(buff_read, MAX_READ, FILE_PATH_1); // *
             buff_read[strlen(input)-1] = '\0';
 
-            o_server -> ip_port = strdup(buff_read); //*
-            o_server -> state = 1;
         }
-        else if(argc = 2){
+        else if(argc == 2){
             fd = fdopen(FILE_PATH_2,"r"); // *
             fgets(buff_read, MAX_READ, FILE_PATH_2); //fzr if's à postriori *
             buff_read[strlen(input)-1] = '\0';
 
-            o_server -> ip_port = strdup(buff_read); //*
-            o_server -> state = 1;
         }
 
+        o_server -> ip_port = strdup(buff_read); //*
+        o_server -> state = 1;
+
         if(update_state(o_server) < 0)
-            o_server -> state = 0;
+            o_server -> state = 0; //*
         else {
             o_server -> state = 1;
             }
@@ -795,9 +809,11 @@ int main(int argc, char **argv){
     }
 ////////////////////////////////////////////////////////////////
 
-    else {
-        printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
-        printf("Exemplo de uso: ./server 54321 10 15 20 25\n");
+else {
+        printf("Uso de server primario: ./server <porta TCP> <IpSecundario:porta TCP> <table1_size> [<table2_size> ...]\n");
+        printf("Exemplo de uso: ./server 54321 127.0.0.1:54322 10 15 20 25\n");
+        printf("Uso de server secundario: ./server <porta TCP> \n");
+        printf("Exemplo de uso: ./server 54321 10 15 20 25 \n");
         return -1;
     }
 
@@ -840,6 +856,7 @@ int main(int argc, char **argv){
                     struct sockaddr_in addr2;
                     int addr_len2 = sizeof(addr2);
                     if(getpeername(socket_client, (struct sockaddr *) &addr2, &addr_len2) == -1) // a confirmar connect_ip
+                        fprintf(stderr, "Erro ao encontrar cliente");
                         return -1;
                     long connect_ip = htonl(atol(strtok(o_server -> ip_port, ":")));
                     if(conect_ip == addr2 -> sin_addr.s_addr) {
@@ -860,7 +877,7 @@ int main(int argc, char **argv){
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_de_cliente;
                     connections[nSockets].events = POLLIN;
-                    res = write_all(socket_de_cliente, (char *) &num_tables, _INT); // donde vem este write all?
+                    res = write_all(socket_de_cliente, (char *) &num_tables, _INT);
                     nSockets++;
                 }
             }
@@ -887,11 +904,16 @@ int main(int argc, char **argv){
                     }
                 }
                 else{
+                    int* ack;
+                    if((ack = (int*) malloc(sizeof(int))) == NULL) {
+                        fprintf(stderr, "Erro ao alocar memoria");
+                    }
+                    *ack = 0;
                     if(!primario){
                         primario = 1;
                         o_server -> state = 0;
                         }
-                    if((net_r_s = network_receive_send(connections[i].fd), NULL)== -1){
+                    if((net_r_s = network_receive_send(connections[i].fd), *ack)== -1){
                         close(connections[i].fd);
                         connections[i].fd = -1;
                         connections[i].events = 0;
@@ -899,10 +921,15 @@ int main(int argc, char **argv){
                         shift(connections,i);
                         nSockets--;
                         printf(" * Client is disconnected!\n");
-                        }
+                    }
                     else if(net_r_s == -2){
                      fprintf(stderr, "Operação falhou");/
-                    }}
+                    }
+                    if(ack != 0) {
+                        o_server -> state = 0;
+                    }
+                    free(ack);
+                }
             }
 
             if (connections[i].revents & POLLERR ||connections[i].revents & POLLHUP) {
