@@ -57,7 +57,7 @@ int main(int argc, char **argv){
 					}
 
 					/* Usar network_connect para estabelcer ligação ao servidor secundario */
-					if((rtables == NULL && rtables = rtables_bind(argv[2])) == NULL){
+					if(rtables == NULL && (rtables = rtables_bind(argv[2])) == NULL){
 						fprintf(stderr, "Erro a establecer ligaçao ao servidor secundario!");
 					}
 					else{
@@ -191,7 +191,7 @@ int main(int argc, char **argv){
 				memcpy(value -> data, data, strlen(data));
 				value -> datasize = strlen(data);
 
-				if(rtables_update(rtables, key,value) == NULL){
+				if(rtables_update(rtables, key,value) == -1){
 					fprintf(stderr, "Erro no commando uptade!");
 					rtables_unbind(rtables);
 				}
@@ -214,7 +214,7 @@ int main(int argc, char **argv){
 
 			else if(!strcasecmp(comando, "collisions")){
 				rtables->table_num = atoi(strtok(NULL, spliters));
-				if(rtables_collisions(rtables){
+				if(rtables_collisions(rtables)==-1){
 					fprintf(stderr, "Erro no commando collisions!");
 					rtables_unbind(rtables);
 				}

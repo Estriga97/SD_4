@@ -1,11 +1,5 @@
 
-#include <error.h>
-#include <stdio.h>
-#include <stdlib.h>
 
-#include "network_client-private.h"
-#include "client_stub-private.h"
-#include "table.h"
 
 
 /* Função para estabelecer uma associação entre o cliente e um conjunto de

@@ -102,7 +102,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 
 
 	do{
-		if(result = write_all(server->socket, (char *) &msg_size, _INT)) == -1){
+		if((result = write_all(server->socket, (char *) &msg_size, _INT)) == -1){
 			sleep(SLEEP_TIME);
 			if(server -> server_type){
 				network_connect(server -> ip_port_secundario);
@@ -131,7 +131,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 
 	/* Enviar a mensagem que foi previamente serializada */
 	do{	
-		if(result = write_all(server->socket, message_out, message_size)) == -1){
+		if((result = write_all(server->socket, message_out, message_size)) == -1){
 			sleep(SLEEP_TIME);
 			if(server -> server_type){
 				network_connect(server -> ip_port_secundario);
@@ -168,9 +168,9 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		Com a função read_all, receber a mensagem de resposta.
 		
 	*/
-	int size;
+	int size,i;
 	i=0;
-	while((result = read_all(server->socket, buff, size) ) == -1 && i!= 1){
+	while((result = read_all(server->socket,(char*) &size, _INT) ) == -1 && i!= 1){
 		sleep(SLEEP_TIME);
 		i++;
 	 }

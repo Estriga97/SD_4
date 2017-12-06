@@ -13,7 +13,6 @@
 static int quit = 0;
 static int nTables;
 static int primario; // 1 = primario, 0 = secundario
-static int secundario_ready = 0;
 pthread_mutex_t dados = PTHREAD_MUTEX_INITIALIZER;
 
 //////////////////////////////////// rtables_sz_tbles ////////////////////////////////////////////////////////
