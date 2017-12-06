@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "message-private.h"
 #include "network_client-private.h"
 #include "client_stub-private.h"
 #include "table.h"
