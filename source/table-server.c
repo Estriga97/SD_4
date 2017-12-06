@@ -14,6 +14,7 @@ static int quit = 0;
 static int nTables;
 static int primario; // 1 = primario, 0 = secundario
 static int secundario_ready = 0;
+pthread_mutex_t dados = PTHREAD_MUTEX_INITIALIZER;
 
 //////////////////////////////////// rtables_sz_tbles ////////////////////////////////////////////////////////
 
@@ -606,10 +607,12 @@ void* pthread_main(void* params) {
     struct thread_param_t *tp = (struct thread_param_t*) params;
     struct message_t msg_pedido = tp -> msg;
     int* res;
+  
     if((res = (int*) malloc(sizeof(int)) == NULL)) {
         fprintf(stderr, "Erro ao alocar memoria");
         return NULL;
     }
+    pthread_mutex_lock(&dados);
     switch (msg_pedido -> c_type) {
         case CT_PUT:
             if(rtables_put(tp -> rtbl, msg_pedido.content -> key, msg_pedido.content -> data) == -1) {
@@ -624,7 +627,9 @@ void* pthread_main(void* params) {
             }
         break;
     }
+    pthread_mutex_unlock(&dados);
     *res = 0
+    
     return res;
 
 }
@@ -881,19 +886,23 @@ int main(int argc, char **argv){
                         printf("Comando errado!");
                     }
                 }
-
-                else if((net_r_s = network_receive_send(connections[i].fd), NULL)== -1){
-                    close(connections[i].fd);
-                    connections[i].fd = -1;
-                    connections[i].events = 0;
-                    connections[i].revents = 0;
-                    shift(connections,i);
-                    nSockets--;
-                    printf(" * Client is disconnected!\n");
-                    }
-                else if(net_r_s == -2){
-                   //* quit = 1; // mudar para mensagem de insucesso
-                }
+                else{
+                    if(!primario){
+                        primario = 1;
+                        o_server -> state = 0;
+                        }
+                    if((net_r_s = network_receive_send(connections[i].fd), NULL)== -1){
+                        close(connections[i].fd);
+                        connections[i].fd = -1;
+                        connections[i].events = 0;
+                        connections[i].revents = 0;
+                        shift(connections,i);
+                        nSockets--;
+                        printf(" * Client is disconnected!\n");
+                        }
+                    else if(net_r_s == -2){
+                     fprintf(stderr, "Operação falhou");/
+                    }}
             }
 
             if (connections[i].revents & POLLERR ||connections[i].revents & POLLHUP) {
