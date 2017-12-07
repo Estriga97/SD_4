@@ -15,4 +15,8 @@ struct server_t{
 	/* tanto antes da ligação estabelecida, como depois.    */
 };
 
+/* Troca o servidor ativo
+*/
+int switch_server(struct server_t *server);
+
 #endif

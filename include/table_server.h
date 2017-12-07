@@ -13,7 +13,7 @@
 #include "message-private.h"
 #include "table_skel-private.h"
 #include "primary_backup-private.h"
-#include "client_stub-private.h"
+
 
 #define SOCKETS_NUMBER 7
 #define MAX_READ 81
@@ -22,7 +22,8 @@
 
 struct thread_param_t {
 	struct message_t* msg;
-    struct rtables_t* rtbl;
+    struct server_t* server;
+    int table_num;
 };
 
 int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int sizE);
@@ -31,7 +32,9 @@ int rtables_ack(struct server_t *server);
 
 struct message_t *network_send_receive(struct server_t *server, struct message_t *msg);
 
-int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value);
+int rtables_put(struct server_t *server,int table_num, char *key, struct data_t *value);
+
+int rtables_update(struct server_t *server,int table_num, char *key, struct data_t *value);
 
 void shift(struct pollfd* connects, int i);
 

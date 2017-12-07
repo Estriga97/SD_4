@@ -1,6 +1,6 @@
 
 
-
+#include "client_stub-private.h"
 
 /* Função para estabelecer uma associação entre o cliente e um conjunto de
  * tabelas remotas num servidor.

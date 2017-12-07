@@ -71,18 +71,21 @@ struct server_t *network_connect(const char *address_port){
 }
 
 struct message_t *network_send_receive(struct server_t *server, struct message_t *msg){
-
+	int sucesso = 0;
+	int tentativas = 0;
 	/* Verificar parâmetros de entrada */
 	if(server == NULL || msg == NULL) {
 		fprintf(stderr, "Erro no contudo recebido (server ou msg)!");
 		return messgerror ();
 	}
-
+	
 	char *message_out;
-	int message_size, msg_size, result;
-	int tentativas = 0;
+	int message_size, msg_size, result,i;
 	struct message_t* msg_resposta;
 
+
+
+	do{
 
 
 	/* Serializar a mensagem recebida */
@@ -91,71 +94,42 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	/* Verificar se a serialização teve sucesso */
 	if(message_size == -1) {
 		fprintf(stderr, "Erro no tamanho da mensagem!");
-		free(message_out);
-		free_message(msg);
-		return messgerror ();}
+		tentativas++;
+		switch_server(server);
+		continue;}
 
 	/* Enviar ao servidor o tamanho da mensagem que será enviada
 	   logo de seguida
 	*/
 	msg_size = htonl(message_size);
-
-
-	do{
-		if((result = write_all(server->socket, (char *) &msg_size, _INT)) == -1){
-			sleep(SLEEP_TIME);
-			if(server -> server_type){
-				network_connect(server -> ip_port_secundario);
-				server -> server_type = 0;
-			}
-			else{
-				network_connect(server -> ip_port_primario);
-				server -> server_type = 1;
-			}
-		}	
-
-		tentativas++;
-	}
-	while(result == -1 && tentativas < MAX_TENTATIVA);
-
+ 	while((result = write_all(server->socket, (char *) &msg_size, _INT)) == -1 && i!= 1){
+		sleep(5);
+		i++;
+	 }
+	 i = 0;
 	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
 		fprintf(stderr, "Erro ao enviar!");
 		free(message_out);
-		free_message(msg);
-		return messgerror ();
+		tentativas++;
+		switch_server(server);
+		continue;;
 	}
 
-	//reset nas tentativas de conecçao
-	tentativas = 0;
-
 	/* Enviar a mensagem que foi previamente serializada */
-	do{	
-		if((result = write_all(server->socket, message_out, message_size)) == -1){
-			sleep(SLEEP_TIME);
-			if(server -> server_type){
-				network_connect(server -> ip_port_secundario);
-				server -> server_type = 0;
-			}
-			else{
-				network_connect(server -> ip_port_primario);
-				server -> server_type = 1;
-			}
-		}
-		
-		tentativas++;
-
-	} while(result == -1 && tentativas < MAX_TENTATIVA);
-
+	while((result = write_all(server->socket, message_out, message_size)) == -1 && i!= 1){
+		sleep(5);
+		i++;
+	 }
+	 i = 0;
+	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
 		fprintf(stderr, "Erro ao enviar!");
 		free(message_out);
-		free_message(msg);
-		return messgerror ();
+		tentativas++;
+		switch_server(server);
+		continue;
 	}
-
-	//reset nas tentativas de conecçao
-	tentativas = 0;
 
 	/* De seguida vamos receber a resposta do servidor:
 
@@ -168,34 +142,34 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		Com a função read_all, receber a mensagem de resposta.
 		
 	*/
-	int size,i;
-	i=0;
+	int size;
+
 	while((result = read_all(server->socket,(char*) &size, _INT) ) == -1 && i!= 1){
-		sleep(SLEEP_TIME);
+		sleep(5);
 		i++;
 	 }
-
+	 i = 0;
+	
 	if(result == -1) {
 		fprintf(stderr, "Erro ao receber o tamanho da mensagem de resposta!");
 		free(message_out);
-		free_message(msg);
-		return messgerror ();
+		tentativas++;
+		switch_server(server);
+		continue;
 	}
-
-	//reset nas tentativas de conecçao
-	tentativas = 0;
 
 	size = ntohl(size);
 	char* buff;
 	if((buff = (char*) malloc(size)) == NULL) {
 		fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta!");
 		free(message_out);
-		free_message(msg);
-		return messgerror ();
+		tentativas++;
+		switch_server(server);
+		continue;
 	}
 
 	while((result = read_all(server->socket, buff, size) ) == -1 && i!= 1){
-		sleep(SLEEP_TIME);
+		sleep(5);
 		i++;
 	 }
 	 i = 0;
@@ -203,9 +177,10 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	if(result == -1) {
 		fprintf(stderr, "Erro receber a mensagem de resposta!");
 		free(message_out);
-		free(msg);
 		free(buff);
-		return messgerror ();
+		tentativas++;
+		switch_server(server);
+		continue;
 	}
 
 	/* Desserializar a mensagem de resposta */
@@ -216,14 +191,21 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		fprintf(stderr, "Erro na desserialização!");
 		free(message_out);
 		free_message(msg_resposta);
-		free(msg);
 		free(buff);
-		return messgerror ();
+		tentativas++;
+		switch_server(server);
+		continue;
 	}
 
 	/* Libertar memória */
 	free(message_out);
 	free(buff);
+	sucesso = 1;}
+	while(!sucesso && tentativas < MAX_TENTATIVA);
+
+	if(!sucesso){
+		msg_resposta = messgerror ();
+	}
 
 	return msg_resposta;
 }
@@ -237,7 +219,27 @@ int network_close(struct server_t *server){
 
 	/* Terminar ligação ao servidor */
 	close(server -> socket);
+	free(server);
 
 	return 0;
 }
 
+
+int switch_server(struct server_t *server){
+	network_close(server);
+	struct server_t *new_server;
+	if(server -> server_type){
+		new_server = network_connect(server->ip_port_secundario);
+		new_server -> server_type = !(server -> server_type);
+	}
+	else{
+		new_server = network_connect(server->ip_port_primario);
+		new_server -> server_type = !(server -> server_type);
+	}
+	new_server -> ip_port_secundario = server -> ip_port_secundario;
+	new_server -> ip_port_primario = server -> ip_port_primario;
+	server = new_server;
+
+	return 0;
+	
+}

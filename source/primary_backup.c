@@ -32,7 +32,7 @@ int update_state(struct server_t *server) {
             return -1;
     }
         
-    free(*ack);
+    free(ack);
 
     return res;
 }

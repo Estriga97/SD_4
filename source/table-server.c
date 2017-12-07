@@ -214,18 +214,14 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 /////////////////////////////////// rtables_put /////////////////////////////////////////////////////////
 
 
-int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
+int rtables_put(struct server_t *server,int table_num, char *key, struct data_t *value){
 
-    if(rtables == NULL || key == NULL || value == NULL){
+    if(server == NULL || key == NULL || value == NULL){
         fprintf(stderr, "Argumentos NULL");
 		return -1;
     }
     
     struct message_t* msg_out;
-    if(rtables -> n_tables <= rtables -> table_num){
-        imprimir_resposta(messgerror ());
-        return -1;
-    }
 
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
         fprintf(stderr, "Erro ao alocar memoria");
@@ -234,7 +230,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
 
     msg_out -> opcode = OC_PUT;
     msg_out -> c_type = CT_ENTRY;
-    msg_out -> table_num = rtables->table_num;
+    msg_out -> table_num = table_num;
     if((msg_out -> content.entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL) {
         free(msg_out);
         return -1;
@@ -243,7 +239,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     msg_out -> content.entry -> value = data_dup(value);
     imprimir_resposta(msg_out);
     struct message_t* msg_resposta;
-    if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
+    if((msg_resposta = network_send_receive(server, msg_out)) == NULL) {
         fprintf(stderr, "Erro ao enviar/receber mensagem");
         return -1;
         
@@ -256,18 +252,14 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
 
 /////////////////////////////////// rtables_update /////////////////////////////////////////////////////////
 
-int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
+int rtables_update(struct server_t *server,int table_num, char *key, struct data_t *value){
     struct message_t* msg_out;
 
-    if(rtables == NULL || key == NULL || value == NULL){
+    if(server == NULL || key == NULL || value == NULL){
         fprintf(stderr, "Argumentos NULL");
 		return -1;
     }
 
-    if(rtables-> n_tables<=rtables -> table_num){
-        imprimir_resposta(messgerror ());
-        return -1;
-    }
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
         fprintf(stderr, "Erro ao alocar memoria");
         return -1;
@@ -275,7 +267,7 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
 
     msg_out -> opcode = OC_UPDATE;
     msg_out -> c_type = CT_ENTRY;
-    msg_out -> table_num = rtables->table_num;
+    msg_out -> table_num = table_num;
     if((msg_out -> content.entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL) {
         free(msg_out);
         free(msg_out -> content.entry);
@@ -287,7 +279,7 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     imprimir_resposta(msg_out);
 
     struct message_t* msg_resposta;
-    if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
+    if((msg_resposta = network_send_receive(server, msg_out)) == NULL) {
         fprintf(stderr, "Erro ao enviar/receber mensagem");
         return -1;
         
@@ -468,12 +460,8 @@ int network_receive_send(int sockfd, int* ack){
         struct thread_param_t pthread_p;
         pthread_p.msg = msg_pedido;
 
-        struct rtables_t* rtables;
         struct server_t* server;
         int* r;
-        if((rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t))) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria");
-        }
         if((server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria");
         }
@@ -481,11 +469,10 @@ int network_receive_send(int sockfd, int* ack){
             fprintf(stderr, "Erro ao alocar memoria");
         }
         server -> socket = sockfd;
-        rtables -> server = server;
-        rtables -> n_tables = nTables;
-        rtables -> table_num = msg_pedido -> table_num;
+        
         pthread_p.msg = msg_pedido;
-        pthread_p.rtbl = rtables;
+        pthread_p.server = server;
+        pthread_p.table_num = nTables;
 
         if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
 		    fprintf(stderr, "Thread não criada.");
@@ -499,7 +486,6 @@ int network_receive_send(int sockfd, int* ack){
         }
 
         free(server);
-        free(rtables);
         free(r);
 
     }
@@ -629,13 +615,13 @@ void* pthread_main(void* params) {
     pthread_mutex_lock(&dados);
     switch (msg_pedido -> opcode) {
         case OC_PUT:
-            if(rtables_put(tp -> rtbl, msg_pedido -> content.key, msg_pedido -> content.data) == -1) {
+            if(rtables_put(tp -> server,tp->table_num, msg_pedido -> content.key, msg_pedido -> content.data) == -1) {
                 fprintf(stderr, "Erro do secundario ao fazer o put");
                 return NULL;
             }
         break;
         case OC_UPDATE:
-            if(rtables_update(tp -> rtbl, msg_pedido -> content.key, msg_pedido -> content.data) == -1) {
+            if(rtables_update(tp -> server,tp->table_num, msg_pedido -> content.key, msg_pedido -> content.data) == -1) {
                 fprintf(stderr, "Erro do secundario ao fazer o update");
                 return NULL;
             }
@@ -747,11 +733,11 @@ int main(int argc, char **argv){
                 return -1;
             }
             FILE* fd;
-            if((getpeername(o_server -> socket, (struct sockaddr *) &addr, &addr_len)) ==-1){
+            if((getpeername(o_server -> socket, (struct sockaddr *) &addr,(socklen_t *)  &addr_len)) ==-1){
                 fprintf(stderr, "Erro ao encontrar server primario");
             }
             else {
-                fprintf(o_server -> ip_port,"%lu:%hu",ntohl(addr-> sin_addr.s_addr) ,ntohs(addr-> sin_port));
+                sprintf(o_server -> ip_port,"%du:%hu",ntohl(addr-> sin_addr.s_addr) ,ntohs(addr-> sin_port));
                 o_server -> state = 1;
             }
             // criar ficheiro no secundario sobre o primario
@@ -775,19 +761,19 @@ int main(int argc, char **argv){
     else if(fl_exist) { //recuperação (como secundario)
         FILE* fd;
         char buff_read [MAX_READ];
-        if((o_server = (struct server_t*) malloc(sizeof(struct server_t)) == NULL)) {
+        if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria");
             //fzr n sei o q neste caso de erro
         }
         if(argc  > 2) {
-            fd = fdopen(FILE_PATH_1,"r"); // *
-            fgets(buff_read, MAX_READ, FILE_PATH_1); // *
+            fd = fopen(FILE_PATH_1,"r"); // *
+            fgets(buff_read, MAX_READ, fd); // *
             buff_read[strlen(buff_read)-1] = '\0';
 
         }
         else if(argc == 2){
-            fd = fdopen(FILE_PATH_2,"r"); // *
-            fgets(buff_read, MAX_READ, FILE_PATH_2); //fzr if's à postriori *
+            fd = fopen(FILE_PATH_2,"r"); // *
+            fgets(buff_read, MAX_READ, fd); //fzr if's à postriori *
             buff_read[strlen(buff_read)-1] = '\0';
 
         }
@@ -851,24 +837,18 @@ else {
                 if((socket_client = accept(connections[0].fd,NULL,NULL)) != -1){
                     struct sockaddr_in addr2;
                     int addr_len2 = sizeof(addr2);
-                    if(getpeername(socket_client, (struct sockaddr *) &addr2, &addr_len2) == -1) // a confirmar connect_ip
+                    if(getpeername(socket_client, (struct sockaddr *) &addr2,(socklen_t *) &addr_len2) == -1) // a confirmar connect_ip
                         fprintf(stderr, "Erro ao encontrar cliente");
                         return -1;
                     long connect_ip = htonl(atol(strtok(o_server -> ip_port, ":")));
                     if(connect_ip == addr2.sin_addr.s_addr) {
-                        struct rtables_t *rtables = (struct rtables_t *) malloc(sizeof( struct rtables_t));
-                        rtables -> server = o_server; // n tem de ser adaptado?? o server recebido no rtables?
-                        rtables -> n_tables = nTables;
                         for(i = 0 ; i < nTables;i++){
                             struct entry_t* lista_entrys = get_tbl_keys(i);
-                            rtables -> table_num = 0;
                             while(lista_entrys -> key != NULL){
-                                rtables_put(rtables, (*lista_entrys).key, (*lista_entrys).value); // n ha if
+                                rtables_put(o_server,i, (*lista_entrys).key, (*lista_entrys).value); // n ha if
                                 lista_entrys++;
                             }
-                            rtables -> table_num++;
                         }
-                    free(rtables);
                     }
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_client;
@@ -909,7 +889,7 @@ else {
                         primario = 1;
                         o_server -> state = 0;
                         }
-                    if((net_r_s = network_receive_send(connections[i].fd, *ack)) == -1){
+                    if((net_r_s = network_receive_send(connections[i].fd, ack)) == -1){
                         close(connections[i].fd);
                         connections[i].fd = -1;
                         connections[i].events = 0;
