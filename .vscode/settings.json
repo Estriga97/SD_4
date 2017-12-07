@@ -6,5 +6,5 @@
         "table_skel-private.h": "c",
         "primary_backup-private.h": "c"
     },
-    "C_Cpp.errorSquiggles": "Disabled"
+    "C_Cpp.errorSquiggles": "Enabled"
 }

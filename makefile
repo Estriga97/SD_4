@@ -9,8 +9,8 @@ LIB = -pthread
 
 all:clean client server
 
-server:$(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o  $(OBJ_DIR)/primary_backup.o $(OBJ_DIR)/table-skel.o
-	$(CC)  $(CFLAGS)  $< $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-$@.o 	   $(OBJ_DIR)/primary_backup.o $(OBJ_DIR)/table-skel.o $(LIB) -o $(BIN_DIR)/$@
+server:$(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o  $(OBJ_DIR)/primary_backup.o $(OBJ_DIR)/table-skel.o $(OBJ_DIR)/network_server.o
+	$(CC)  $(CFLAGS)  $< $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-$@.o 	   $(OBJ_DIR)/primary_backup.o $(OBJ_DIR)/table-skel.o $(OBJ_DIR)/network_server.o $(LIB) -o $(BIN_DIR)/$@
 
 
 client:$(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o  $(OBJ_DIR)/client_stub.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/table-client.o
