@@ -226,18 +226,19 @@ int network_close(struct server_t *server){
 
 
 int switch_server(struct server_t *server){
-	network_close(server);
 	struct server_t *new_server;
+
 	if(server -> server_type){
 		new_server = network_connect(server->ip_port_secundario);
-		new_server -> server_type = !(server -> server_type);
-	}
-	else{
+		
+	}else{
 		new_server = network_connect(server->ip_port_primario);
-		new_server -> server_type = !(server -> server_type);
 	}
 	new_server -> ip_port_secundario = server -> ip_port_secundario;
 	new_server -> ip_port_primario = server -> ip_port_primario;
+	new_server -> server_type = !(server -> server_type);
+	
+	network_close(server);
 	server = new_server;
 
 	return 0;

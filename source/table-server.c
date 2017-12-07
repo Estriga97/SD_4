@@ -231,6 +231,8 @@ int network_receive_send(int sockfd, int* ack){
 	     logo de seguida
 	*/
     msg_size = htonl(message_size);
+   
+    
  
  	result = write_all(sockfd, (char *) &msg_size, _INT);
 
@@ -263,58 +265,6 @@ int network_receive_send(int sockfd, int* ack){
     free(message_resposta);
     free(message_pedido);
 
-	return 0;
-}
-//////////////////////////////////////// server_connect ////////////////////////////////////////////////////
-
-int server_connect(struct server_t* server){
-
-	/* Verificar parâmetro da função e alocação de memória */
-	if(server == NULL && server -> ip_port){
-		return -1;
-    }
-
-	int sockfd;
-
-	/* Estabelecer ligação ao servidor:
-
-		Preencher estrutura struct sockaddr_in com dados do
-		endereço do servidor.
-
-		Criar a socket.
-
-		Estabelecer ligação.
-	*/
-	struct sockaddr_in* addr;
-	if((addr = malloc(sizeof(struct sockaddr_in))) == NULL) {
-		fprintf(stderr, "Erro ao alocar memoria!");
-		return -1;
-	}
-	char* token = strtok(server -> ip_port, ":");
-
-	addr-> sin_family = AF_INET;
-	if (inet_pton(AF_INET, token, &(addr-> sin_addr)) < 1) {
-		printf("Erro ao converter IP\n");
-		return -1;
-		}
-
-	addr-> sin_port = htons(atoi(strtok(NULL,":")));
-
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		fprintf(stderr, "Erro ao criar socket TCP!");
-		return -1;
-	}
-
-	// Estabelece conexão com o servidor definido em server
-	if (connect(sockfd,(struct sockaddr *)addr, sizeof(*addr)) < 0) {
-		fprintf(stderr, "Erro ao conectar-se ao servidor!");
-		close(sockfd);
-		return -1;
-}
-    server -> socket = sockfd;
-    server -> state = 1;
-
-	free(addr);
 	return 0;
 }
 
@@ -372,12 +322,12 @@ int main(int argc, char **argv){
         	return -1;
         }
 
-        o_server -> ip_port = strdup(argv[3]);
+        o_server -> ip_port = strdup(argv[2]);
         o_server -> state = 0; // DOWN
 
         FILE* fd;
         // criar ficheiro no primario
-        fd = fopen("SD_4/ip_1","w");
+        fd = fopen("FILE_PATH_1","w");
         fprintf(fd,"%s", o_server -> ip_port);
         fclose(fd);
 
@@ -455,11 +405,14 @@ int main(int argc, char **argv){
                 fprintf(stderr, "Erro ao encontrar server primario");
             }
             else {
+                char*ip=malloc(81);
+                o_server -> ip_port = (char*) malloc(81);
+                inet_aton(ip,addr);
                 sprintf(o_server -> ip_port,"%du:%hu",ntohl(addr-> sin_addr.s_addr) ,ntohs(addr-> sin_port));
                 o_server -> state = 1;
             }
             // criar ficheiro no secundario sobre o primario
-            fd = fopen("SD_4/ip_2","w");
+            fd = fopen(FILE_PATH_2,"w");
             fprintf(fd,"%s", o_server -> ip_port);
             fclose(fd);
 

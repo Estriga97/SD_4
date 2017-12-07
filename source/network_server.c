@@ -85,9 +85,10 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		free_message(msg);
 		return messgerror ();
 	}
-
+	printf("%d",size);
 	size = ntohl(size);
 	char* buff;
+	printf("%d",size);
 	if((buff = (char*) malloc(size)) == NULL) {
 		fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta!");
 		free(message_out);
@@ -127,4 +128,58 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	free(buff);
 
 	return msg_resposta;
+}
+
+
+//////////////////////////////////////// server_connect ////////////////////////////////////////////////////
+
+int server_connect(struct server_t* server){
+
+	/* Verificar parâmetro da função e alocação de memória */
+	if(server == NULL && server -> ip_port){
+		return -1;
+    }
+
+	int sockfd;
+
+	/* Estabelecer ligação ao servidor:
+
+		Preencher estrutura struct sockaddr_in com dados do
+		endereço do servidor.
+
+		Criar a socket.
+
+		Estabelecer ligação.
+	*/
+	struct sockaddr_in* addr;
+	if((addr = malloc(sizeof(struct sockaddr_in))) == NULL) {
+		fprintf(stderr, "Erro ao alocar memoria!");
+		return -1;
+	}
+	char* token = strtok(server -> ip_port, ":");
+
+	addr-> sin_family = AF_INET;
+	if (inet_pton(AF_INET, token, &(addr-> sin_addr)) < 1) {
+		printf("Erro ao converter IP\n");
+		return -1;
+		}
+
+	addr-> sin_port = htons(atoi(strtok(NULL,":")));
+
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		fprintf(stderr, "Erro ao criar socket TCP!");
+		return -1;
+	}
+
+	// Estabelece conexão com o servidor definido em server
+	if (connect(sockfd,(struct sockaddr *)addr, sizeof(*addr)) < 0) {
+		fprintf(stderr, "Erro ao conectar-se ao servidor!");
+		close(sockfd);
+		return -1;
+}
+    server -> socket = sockfd;
+    server -> state = 1;
+
+	free(addr);
+	return 0;
 }

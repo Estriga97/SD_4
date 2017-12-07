@@ -1,0 +1,41 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {   
+            "label": "Run testes",
+            "type": "shell",
+            "taskName": "make",
+            "command": "make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "taskName": "test_message",
+            "type": "shell",
+            "command": "valgrind ${workspaceRoot}/binary/test_message",
+            "group": "test"
+        },
+        {
+            "taskName": "test_data",
+            "type": "shell",
+            "command": "valgrind ${workspaceRoot}/binary/test_data",
+            "group": "test"
+        },
+        {
+            "taskName": "test_entry",
+            "type": "shell",
+            "command": "valgrind ${workspaceRoot}/binary/test_entry",
+            "group": "test"
+        },
+        {
+            "taskName": "test_table",
+            "type": "shell",
+            "command": "valgrind ${workspaceRoot}/binary/test_table",
+            "group": "test"
+        }
+    ]
+}

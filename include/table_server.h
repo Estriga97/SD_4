@@ -16,8 +16,8 @@
 
 #define SOCKETS_NUMBER 7
 #define MAX_READ 81
-#define FILE_PATH_1 "SD_4/ip_1"
-#define FILE_PATH_2 "SD_4/ip_2"
+#define FILE_PATH_1 "ip_1"
+#define FILE_PATH_2 "ip_2"
 
 struct thread_param_t {
 	struct message_t* msg;
