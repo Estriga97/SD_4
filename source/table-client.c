@@ -49,7 +49,7 @@ int main(int argc, char **argv){
 				}
 					/* Usar network_connect para estabelcer ligação ao servidor principal */
 					if((rtables = rtables_bind(argv[1])) == NULL){
-						fprintf(stderr, "Erro a establecer ligaçao ao servidor principal!");
+						fprintf(stderr, "Erro a estabelecer ligaçao ao servidor principal!");
 					}		
 					else{
 						rtables -> server -> server_type = 1;
@@ -58,7 +58,7 @@ int main(int argc, char **argv){
 
 					/* Usar network_connect para estabelcer ligação ao servidor secundario */
 					if(rtables == NULL && (rtables = rtables_bind(argv[2])) == NULL){
-						fprintf(stderr, "Erro a establecer ligaçao ao servidor secundario!");
+						fprintf(stderr, "Erro a estabelecer ligaçao ao servidor secundario!");
 					}
 					else{
 						rtables -> server -> server_type = 0;
