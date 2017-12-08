@@ -13,6 +13,7 @@
 #include "message-private.h"
 #include "table_skel-private.h"
 #include "primary_backup-private.h"
+#include "network_server.h"
 
 #define SOCKETS_NUMBER 7
 #define MAX_READ 81

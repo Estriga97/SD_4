@@ -38,6 +38,7 @@ int update_state(struct server_t *server) {
     free(ack);
 
     return res;
+
 }
 //////////////////////////////////// rtables_sz_tbles ////////////////////////////////////////////////////////
 
@@ -142,8 +143,8 @@ int rtables_put(struct server_t *server,int table_num, char *key, struct data_t 
     if((msg_resposta = network_send_receive(server, msg_out)) == NULL) {
         fprintf(stderr, "Erro ao enviar/receber mensagem");
         return -1;
-        
     }
+    
     imprimir_resposta(msg_resposta);
     free_message(msg_resposta);
     free_message(msg_out);
