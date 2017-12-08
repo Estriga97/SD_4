@@ -89,6 +89,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	size = ntohl(size);
 	char* buff;
 	printf("%d",size);
+	fflush(stdout);
 	if((buff = (char*) malloc(size)) == NULL) {
 		fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta!");
 		free(message_out);
@@ -141,7 +142,7 @@ int server_connect(struct server_t* server){
     }
 
 	int sockfd;
-
+	char * ip_porta = strdup(server -> ip_port);
 	/* Estabelecer ligação ao servidor:
 
 		Preencher estrutura struct sockaddr_in com dados do
@@ -156,7 +157,7 @@ int server_connect(struct server_t* server){
 		fprintf(stderr, "Erro ao alocar memoria!");
 		return -1;
 	}
-	char* token = strtok(server -> ip_port, ":");
+	char* token = strtok(ip_porta, ":");
 
 	addr-> sin_family = AF_INET;
 	if (inet_pton(AF_INET, token, &(addr-> sin_addr)) < 1) {

@@ -152,7 +152,7 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size){
   msg_buf++;
   m->table_num = ntohs(*(short *) ++msg_buf);
 
-  if (((m->opcode < 10) || (m->opcode > 51))&&(m-> opcode != 99)){
+  if (((m->opcode < 10) || (m->opcode > 71))&&(m-> opcode != 99)){
     free_message(m);
     return NULL;
   }

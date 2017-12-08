@@ -48,6 +48,7 @@ int rtables_unbind(struct rtables_t *rtables){
     }
     
     free(rtables -> server);
+    free(rtables);
     return 0;
 }
 

@@ -223,7 +223,7 @@ int network_close(struct server_t *server){
 
 	return 0;
 }
-
+/*FALTAM IFS*/
 
 int switch_server(struct server_t *server){
 	struct server_t *new_server;

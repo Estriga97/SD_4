@@ -5,11 +5,11 @@
 
 /* Define os possíveis opcodes da mensagem */
 #define OC_RT_ERROR	99
-#define OC_SERVER 60
+#define OC_SZ_TABLES 60
+#define OC_ACK 70
+
 
 /* Define códigos para os possíveis conteúdos da mensagem */
-#define CT_SZ_TABLES 60
-#define CT_ACK 70
 
 /* Função que garante o envio de len bytes armazenados em buf,
    através da socket sock.

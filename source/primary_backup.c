@@ -49,12 +49,12 @@ int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int size) {
         return -1;
     }
     
-    msg_tables -> opcode = OC_SERVER;
-    msg_tables -> c_type = CT_SZ_TABLES;
+    msg_tables -> opcode = OC_SZ_TABLES;
+    msg_tables -> c_type = CT_KEYS;
     msg_tables -> table_num = -1;
 
-    char** cnt_keys = msg_tables -> content.keys;
-    if((cnt_keys = (char**) malloc(sizeof(char*)*size)) == NULL)
+    char** cnt_keys;
+    if((cnt_keys = (char**) malloc(sizeof(char*)*(size+1))) == NULL)
         return -1;
         
     int i;
@@ -68,8 +68,9 @@ int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int size) {
             return -1;
         }
     }
+    cnt_keys[size] = NULL;
 
-
+    msg_tables->content.keys = cnt_keys;
     struct message_t* msg_resposta = network_send_receive(server, msg_tables);
     if(msg_resposta == NULL){
         imprimir_resposta(messgerror ());
@@ -92,8 +93,8 @@ int rtables_ack(struct server_t *server) {
         return -1;
     }
         
-    msg_ack -> opcode = OC_SERVER;
-    msg_ack -> c_type = CT_ACK;
+    msg_ack -> opcode = OC_ACK;
+    msg_ack -> c_type = CT_RESULT;
     msg_ack -> table_num = -1;
 
         

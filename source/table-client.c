@@ -26,11 +26,10 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	struct rtables_t* rtables;
 	    
 	char input [MAX_READ];
 	signal(SIGPIPE, SIG_IGN);
-
+    struct rtables_t* rtables = NULL;//POR A NULL EM TODOS OS ERROS
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
 	int condicao = -1;
@@ -38,7 +37,7 @@ int main(int argc, char **argv){
 
 		printf(">>> "); // Mostrar a prompt para inserção de comando
 
-		if(rtables -> server == NULL){
+		if(rtables == NULL){
 
 			int tentativas = 0;
 			//tentar as conecçoes ao servidor principal seguido do servidor secundario
@@ -50,21 +49,24 @@ int main(int argc, char **argv){
 					/* Usar network_connect para estabelcer ligação ao servidor principal */
 					if((rtables = rtables_bind(argv[1])) == NULL){
 						fprintf(stderr, "Erro a estabelecer ligaçao ao servidor principal!");
+						rtables=NULL;
 					}		
 					else{
 						rtables -> server -> server_type = 1;
 						fprintf(stderr, "Ligado ao servidor principal.");
+					
 					}
-
+					if(rtables==NULL){
 					/* Usar network_connect para estabelcer ligação ao servidor secundario */
-					if(rtables == NULL && (rtables = rtables_bind(argv[2])) == NULL){
+					if((rtables = rtables_bind(argv[2])) == NULL){
 						fprintf(stderr, "Erro a estabelecer ligaçao ao servidor secundario!");
+						rtables=NULL;
 					}
 					else{
 						rtables -> server -> server_type = 0;
 						fprintf(stderr, "Ligado ao servidor secundario.");
 					}
-					tentativas++;
+					tentativas++;}
 			}
 			while(tentativas < MAX_TENTATIVA && rtables == NULL );
 
@@ -90,7 +92,6 @@ int main(int argc, char **argv){
 		if(!strcasecmp(comando,"quit")){
 			condicao = 0;
 			rtables_unbind(rtables);
-			free(rtables);
 		}
 
 		/* Caso contrário:

@@ -176,7 +176,7 @@ int network_receive_send(int sockfd, int* ack){
     if(msg_pedido->table_num == -1){
          if((msg_resposta = invoke_server_version(msg_pedido))==NULL)
             return -2;
-         if(msg_resposta -> c_type == CT_ACK) {
+         if(msg_resposta -> opcode == OC_ACK) {
             *ack = 1;
          }
     }
@@ -312,7 +312,8 @@ void* pthread_main(void* params) {
 //////////////////////////////////////// main ////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
-
+    printf("%s",argv[0]);
+    fflush(stdout);
     int listening_socket,i;
     struct server_t* o_server;
     int fl_exist = (file_exist(FILE_PATH_1) || file_exist(FILE_PATH_2));  //ver se complia
@@ -321,7 +322,6 @@ int main(int argc, char **argv){
         printf("Erro ao criar servidor!");
         return -1;
     }
-
     if(argc > 2 && !fl_exist) { //primario
         primario = 1;
         if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essensial!
@@ -335,9 +335,10 @@ int main(int argc, char **argv){
         }
         o_server -> state = 0; // DOWN
 
+
         FILE* fd;
         // criar ficheiro no primario
-        if((fd = fopen(FILE_PATH_1,"r")) == NULL) { // essensial!
+        if((fd = fopen(FILE_PATH_1,"w")) == NULL) { // essensial!
             fprintf(stderr, "Erro ao criar ficheiro");
             return -1;
         }
@@ -369,7 +370,6 @@ int main(int argc, char **argv){
             fprintf(stderr, "Erro ao criar tabelas");
             return -1;
         }
-
         if(server_connect(o_server) < 0)
             o_server -> state = 0;
         else {
@@ -401,17 +401,18 @@ int main(int argc, char **argv){
         }
         if((o_server -> socket = accept(listening_socket,NULL,NULL)) != -1){
             struct sockaddr_in* addr;
-            int addr_len = sizeof(addr);
+            int addr_len = sizeof(struct sockaddr_in);
             if((addr = (struct sockaddr_in*) malloc(addr_len)) == NULL) {  // essensial!
                 fprintf(stderr, "Erro ao alocar memoria");
                 return -1;
             }
             FILE* fd;
-            if((getpeername(o_server -> socket, (struct sockaddr *) &addr,(socklen_t *)  &addr_len)) ==-1){
+            /*if((getpeername(o_server -> socket, (struct sockaddr *) &addr,(socklen_t *)  &addr_len)) ==-1){
                 fprintf(stderr, "Erro ao encontrar address primario por falta de recursos");
                 return -1;
             }
             else {
+
                 char* ip;
                 if((ip = (char*) malloc(MAX_READ)) == NULL) {
                     fprintf(stderr, "Erro ao alocar memoria");
@@ -421,7 +422,7 @@ int main(int argc, char **argv){
                     fprintf(stderr, "Erro ao alocar memoria");
                     return -1;
                 }
-                if((inet_aton(ip,&(addr -> sin_addr))) < 1) {
+                if((inet_aton(ip,&(addr -> sin_addr))) == 0) {
                     fprintf(stderr, "Erro ao preparar IP");
                     return -1;
                 }
@@ -436,18 +437,25 @@ int main(int argc, char **argv){
                 return -1;
             }
             fprintf(fd,"%s", o_server -> ip_port);
-            fclose(fd);
+            fclose(fd);*/
 
-            int err = update_state(o_server);
-            if(err) { // como fzs neste caso? n podemos deixar o sec com tabelas desatualizadas
-                fprintf(stderr, "Erro ao atualizar tabelas");
-                free(o_server -> ip_port);
-                free(o_server);
-                free(addr);
-                remove(FILE_PATH_2);
-                return -1;
+            int* ack;
+            if((ack = (int*) malloc(sizeof(int))) == NULL) {
+            //*
             }
-            free(addr);
+            *ack = 0;
+
+            while(!*ack) {
+                if((network_receive_send(o_server->socket, ack)) < 0){
+                       fprintf(stderr, "Erro ao atualizar tabelas");
+                        free(o_server -> ip_port);
+                        free(o_server);
+                        free(addr);
+                        remove(FILE_PATH_2);
+                return -1;
+                }
+            }
+            //free(addr);
         }
 
     }
@@ -463,13 +471,13 @@ int main(int argc, char **argv){
         }
         if(argc  > 2) {
             if((fd = fopen(FILE_PATH_1,"r")) == NULL) { // essensial!
-                fprintf(stderr, "Erro ao criar ficheiro");
+                fprintf(stderr, "Erro ao encontrar ficheiro");
                 return -1;
             }
         }
         else if(argc == 2){
             if((fd = fopen(FILE_PATH_2,"r")) == NULL) { // essensial!
-                fprintf(stderr, "Erro ao criar ficheiro");
+                fprintf(stderr, "Erro ao encontrar ficheiro");
                 return -1;
             }
         }
