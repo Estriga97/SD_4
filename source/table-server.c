@@ -290,13 +290,13 @@ void* pthread_main(void* params) {
     pthread_mutex_lock(&dados);
     switch (msg_pedido -> opcode) {
         case OC_PUT:
-            if(rtables_put(tp -> server,tp->table_num, msg_pedido -> content.key, msg_pedido -> content.data) == -1) {
+            if(rtables_put(tp -> server,tp->table_num, msg_pedido -> content.entry->key, msg_pedido -> content.entry->value) == -1) {
                 fprintf(stderr, "Erro do secundario ao fazer o put");
                 return NULL;
             }
         break;
         case OC_UPDATE:
-            if(rtables_update(tp -> server,tp->table_num, msg_pedido -> content.key, msg_pedido -> content.data) == -1) {
+            if(rtables_update(tp -> server,tp->table_num, msg_pedido -> content.entry->key, msg_pedido -> content.entry->value) == -1) {
                 fprintf(stderr, "Erro do secundario ao fazer o update");
                 return NULL;
             }
@@ -406,8 +406,9 @@ int main(int argc, char **argv){
                 fprintf(stderr, "Erro ao alocar memoria");
                 return -1;
             }
+            /*
             FILE* fd;
-            /*if((getpeername(o_server -> socket, (struct sockaddr *) &addr,(socklen_t *)  &addr_len)) ==-1){
+            if((getpeername(o_server -> socket, (struct sockaddr *) &addr,(socklen_t *)  &addr_len)) ==-1){
                 fprintf(stderr, "Erro ao encontrar address primario por falta de recursos");
                 return -1;
             }
@@ -422,7 +423,7 @@ int main(int argc, char **argv){
                     fprintf(stderr, "Erro ao alocar memoria");
                     return -1;
                 }
-                if((inet_aton(ip,&(addr -> sin_addr))) == 0) {
+                if((ip=inet_ntoa(addr -> sin_addr)) == 0) {
                     fprintf(stderr, "Erro ao preparar IP");
                     return -1;
                 }
