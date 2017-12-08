@@ -425,7 +425,7 @@ int main(int argc, char **argv){
                     fprintf(stderr, "Erro ao preparar IP");
                     return -1;
                 }
-                sprintf(o_server -> ip_port,"%du:%hu",ip ,ntohs(addr-> sin_port));
+                sprintf(o_server -> ip_port,"%s:%hu",ip ,ntohs(addr-> sin_port));
                 o_server -> state = 1;
                 free(ip);
             }
