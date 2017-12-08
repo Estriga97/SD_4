@@ -75,7 +75,7 @@ int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int size) {
         imprimir_resposta(messgerror ());
         free(msg_resposta);
         free_message(msg_tables);
-        return -2;
+        return -1;
     }
     imprimir_resposta(msg_resposta);
     free_message(msg_tables);

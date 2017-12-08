@@ -15,7 +15,6 @@ static int nTables;
 static int primario; // 1 = primario, 0 = secundario
 pthread_mutex_t dados = PTHREAD_MUTEX_INITIALIZER;
 
-
 ///////////////////////////////////  file_exist  /////////////////////////////////////////////////////////
 
 int file_exist(const char* fl_nm) {
@@ -58,7 +57,6 @@ void shift(struct pollfd* connects, int i) {
 
         i++;
     }
-
 }
 
 ///////////////////////////////////  prt_wrong_args  /////////////////////////////////////////////////////////
@@ -331,12 +329,18 @@ int main(int argc, char **argv){
         	return -1;
         }
 
-        o_server -> ip_port = strdup(argv[2]);
+        if((o_server -> ip_port = strdup(argv[2])) == NULL) {
+            fprintf(stderr, "Erro ao alocar memoria");
+            return -1;
+        }
         o_server -> state = 0; // DOWN
 
         FILE* fd;
         // criar ficheiro no primario
-        fd = fopen("FILE_PATH_1","w");
+        if((fd = fopen(FILE_PATH_1,"r")) == NULL) { // essensial!
+            fprintf(stderr, "Erro ao criar ficheiro");
+            return -1;
+        }
         fprintf(fd,"%s", o_server -> ip_port);
         fclose(fd);
 
@@ -359,30 +363,23 @@ int main(int argc, char **argv){
             memcpy(lista_tabelas[i-3],argv[i],strlen(argv[i])+1);
         }
 
-        lista_tabelas[argc-3] = NULL;
+        lista_tabelas[argc-3] = NULL; 
         
-        table_skel_init(lista_tabelas);
-
+        if((table_skel_init(lista_tabelas)) == -1) { // essensial!
+            fprintf(stderr, "Erro ao criar tabelas");
+            return -1;
+        }
 
         if(server_connect(o_server) < 0)
             o_server -> state = 0;
         else {
             o_server -> state = 1;
-            int rtbales_sz_res = rtables_sz_tbles(o_server,lista_tabelas,argc-3);
-            if(rtbales_sz_res == -1) {
+            if((rtables_sz_tbles(o_server,lista_tabelas,argc-3)) == -1) {
                 o_server -> state = 0;
-                return -1;
             }
-            else if(rtbales_sz_res == -2)
-                o_server -> state = 0;
             else {
-                int rtbales_ack_res = rtables_ack(o_server);
-                if(rtbales_ack_res == -1) {
+                if((rtables_ack(o_server)) == -1) {
                     o_server -> state = 0;
-                    return -1;
-                }
-                else if(rtbales_ack_res == -2) {
-                    o_server -> state = 0;    
                 }
             }
         }
@@ -411,31 +408,44 @@ int main(int argc, char **argv){
             }
             FILE* fd;
             if((getpeername(o_server -> socket, (struct sockaddr *) &addr,(socklen_t *)  &addr_len)) ==-1){
-                if(errno == ENOBUFS) {
-                    fprintf(stderr, "Erro ao encontrar address primario por falta de recursos");
-                    return -1;
-                }
-                else {
-                    // o q fazer depois de dar erro aqui, considerando os casos q foram?
-                }
-                fprintf(stderr, "Erro ao encontrar server primario");
+                fprintf(stderr, "Erro ao encontrar address primario por falta de recursos");
+                return -1;
             }
             else {
-                char* ip = malloc(81); // pq os magic numbers?!? donde vem o 81? muitos problemas aqui, e o Neelo não gosta!!!!
-                o_server -> ip_port = (char*) malloc(81);
-                inet_aton(ip,&(addr -> sin_addr)); // inet_aton(ip,addr);
-                sprintf(o_server -> ip_port,"%du:%hu",ntohl(addr-> sin_addr.s_addr) ,ntohs(addr-> sin_port));
+                char* ip;
+                if((ip = (char*) malloc(MAX_READ)) == NULL) {
+                    fprintf(stderr, "Erro ao alocar memoria");
+                    return -1;
+                }
+                if((o_server -> ip_port = (char*) malloc(MAX_READ)) == NULL) {
+                    fprintf(stderr, "Erro ao alocar memoria");
+                    return -1;
+                }
+                if((inet_aton(ip,&(addr -> sin_addr))) < 1) {
+                    fprintf(stderr, "Erro ao preparar IP");
+                    return -1;
+                }
+                sprintf(o_server -> ip_port,"%du:%hu",ip ,ntohs(addr-> sin_port));
                 o_server -> state = 1;
+                free(ip);
             }
 
             // criar ficheiro no secundario sobre o primario
-            fd = fopen(FILE_PATH_2,"w");
+            if((fd = fopen(FILE_PATH_2,"w")) == NULL) { // essensial!
+                fprintf(stderr, "Erro ao criar ficheiro");
+                return -1;
+            }
             fprintf(fd,"%s", o_server -> ip_port);
             fclose(fd);
 
             int err = update_state(o_server);
             if(err) { // como fzs neste caso? n podemos deixar o sec com tabelas desatualizadas
                 fprintf(stderr, "Erro ao atualizar tabelas");
+                free(o_server -> ip_port);
+                free(o_server);
+                free(addr);
+                remove(FILE_PATH_2);
+                return -1;
             }
             free(addr);
         }
@@ -535,7 +545,7 @@ int main(int argc, char **argv){
                     int addr_len2 = sizeof(addr2);
                     if(getpeername(socket_client, (struct sockaddr *) &addr2,(socklen_t *) &addr_len2) == -1) { // a confirmar connect_ip, e fzr msm merda q tá em cima?
                         fprintf(stderr, "Erro ao encontrar cliente");
-                        return -1;
+                        continue;
                     }
                     long connect_ip = htonl(atol(strtok(o_server -> ip_port, ":")));
                     if(connect_ip == addr2.sin_addr.s_addr) {
@@ -552,6 +562,9 @@ int main(int argc, char **argv){
                     connections[nSockets].events = POLLIN;
                     res = write_all(socket_client, (char *) &num_tables, _INT);
                     nSockets++;
+                }
+                else {
+                    fprintf(stderr, "Erro ao aceitar client");
                 }
             }
     }
