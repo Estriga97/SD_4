@@ -323,6 +323,7 @@ int main(int argc, char **argv){
     }
 
     o_server -> ip_port = NULL;
+    o_server -> socket = -1;
 
     if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) { // essensial!
         printf("Erro ao criar servidor!");
@@ -552,14 +553,17 @@ int main(int argc, char **argv){
         if(connections[0].revents & POLLIN){ /* novo pedido de conexão */
             int socket_client;
             if(nSockets < SOCKETS_NUMBER){
+
                 if((socket_client = accept(connections[0].fd,NULL,NULL)) != -1){
                     struct sockaddr_in addr2;
                     int addr_len2 = sizeof(addr2);
+
                     if(getpeername(socket_client, (struct sockaddr *) &addr2,(socklen_t *) &addr_len2) == -1) { // a confirmar connect_ip, e fzr msm merda q tá em cima?
                         fprintf(stderr, "Erro ao encontrar cliente");
                         continue;
                     }
                     long connect_ip = htonl(atol(strtok(o_server -> ip_port, ":")));
+
                     if(connect_ip == addr2.sin_addr.s_addr) {//server secundario
                         o_server -> socket = socket_client;
                         if(rtables_sz_tbles(o_server,lista_tabelas,argc-3) == -1) {
@@ -572,7 +576,11 @@ int main(int argc, char **argv){
                                 lista_entrys++;
                             }
                         }
-                    }else{//cliente
+                        connections[1].fd = o_server -> socket; // tem de ser adaptado??
+                        connections[1].events = POLLIN;
+                    }
+                    
+                    else{//cliente
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_client;
                     connections[nSockets].events = POLLIN;
@@ -590,7 +598,7 @@ int main(int argc, char **argv){
         else{
             i = 1;
         }
-         struct server_t* server = o_server;
+       
         while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
             if (connections[i].revents & POLLIN) {
                 if(i == 2){ //stdin
@@ -653,7 +661,9 @@ int main(int argc, char **argv){
     table_skel_destroy();
     /* fechar as ligações */
     for(i = 0; i < nSockets; i++){
-        close(connections[i].fd);
+        if(connections[i].fd != -1){
+            close(connections[i].fd);
+        }
     }
      // libertação das tabelas usadas para passar a informação para o secundario
     if(argc>2){

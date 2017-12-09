@@ -22,12 +22,15 @@ struct rtables_t *rtables_bind(const char *address_port){
     }
     struct server_t *server;
     if((server = network_connect(address_port)) == NULL) {
+        free(rtables);
         return NULL;
     }
     rtables -> server = server;
     int result;
     if(read_all(server->socket,(char*)&result, _INT) == -1) {
 		fprintf(stderr, "Erro ao read_all!");
+        free(rtables);
+        free(server);
 		return NULL;
     }
     rtables -> n_tables = ntohl(result);
@@ -49,9 +52,9 @@ int rtables_unbind(struct rtables_t *rtables){
         fprintf(stderr, "Falha a fechar o servidor!");
         return -1;
     }
-    
-    free(rtables -> server);
+
     free(rtables);
+    
     return 0;
 }
 
