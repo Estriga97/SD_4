@@ -11,8 +11,9 @@
 #include "table_server.h"
 
 static int quit = 0;
-static int nTables;
+int nTables;
 static int primario; // 1 = primario, 0 = secundario
+struct server_t* o_server;
 pthread_mutex_t dados = PTHREAD_MUTEX_INITIALIZER;
 
 ///////////////////////////////////  file_exist  /////////////////////////////////////////////////////////
@@ -174,37 +175,28 @@ int network_receive_send(int sockfd, int* ack){
 
     /* Processar a mensagem */
     if(msg_pedido->table_num == -1){
+
          if((msg_resposta = invoke_server_version(msg_pedido))==NULL)
             return -2;
          if(msg_resposta -> opcode == (OC_ACK + 1)) {
             *ack = 1;
          }
     }
-    else if(msg_pedido -> table_num >= nTables){
-        msg_resposta = messgerror();
-        fprintf(stderr, "Erro devido a inexistência de Tabela!");
-    }
     else{
         msg_resposta = invoke(msg_pedido); //*
         
-        if(ack!=NULL){
+        if(ack!=NULL&& msg_resposta->opcode!=99){
         pthread_t nova;
         struct thread_param_t pthread_p;
         pthread_p.msg = msg_pedido;
 
-        struct server_t* server;
+        
         int* r;
-        if((server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria");
-        }
         if((r = (int*) malloc(sizeof(int))) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria");
         }
-        server -> socket = sockfd;//FIXME:socket cliente
-
-        
         pthread_p.msg = msg_pedido;
-        pthread_p.server = server;
+        pthread_p.server = o_server;
         pthread_p.table_num = nTables;
 
         if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
@@ -217,8 +209,6 @@ int network_receive_send(int sockfd, int* ack){
         if(*r != 0) {
             *ack = 1;
         }
-
-        free(server);
         free(r);
 
     }}
@@ -292,7 +282,7 @@ void* pthread_main(void* params) {
     pthread_mutex_lock(&dados);
     switch (msg_pedido -> opcode) {
         case OC_PUT:
-            if(rtables_put(tp -> server,tp->table_num, msg_pedido -> content.entry->key, msg_pedido -> content.entry->value) == -1) {
+            if(rtables_put(tp -> server,msg_pedido ->table_num, msg_pedido -> content.entry->key, msg_pedido -> content.entry->value) == -1) {
                 fprintf(stderr, "Erro do secundario ao fazer o put");
                 return NULL;
             }
@@ -318,7 +308,6 @@ int main(int argc, char **argv){
     fflush(stdout);
     char ** lista_tabelas;
     int listening_socket,i;
-    struct server_t* o_server;
     int fl_exist = (file_exist(FILE_PATH_1) || file_exist(FILE_PATH_2));  //ver se complia
 
     int* ack;
@@ -623,7 +612,7 @@ int main(int argc, char **argv){
                     if(ack != 0) {
                         o_server -> state = 0;
                     }
-                    free(ack);
+                    
                 }
             }
 
