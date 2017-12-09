@@ -20,7 +20,10 @@ struct rtables_t *rtables_bind(const char *address_port){
     if((rtables = (struct rtables_t*) malloc(sizeof(struct rtables_t))) == NULL){
         return NULL;
     }
-    struct server_t *server = network_connect(address_port);
+    struct server_t *server;
+    if((server = network_connect(address_port)) == NULL) {
+        return NULL;
+    }
     rtables -> server = server;
     int result;
     if(read_all(server->socket,(char*)&result, _INT) == -1) {
