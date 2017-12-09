@@ -309,8 +309,8 @@ int main(int argc, char **argv){
     char ** lista_tabelas;
     int listening_socket,i;
     int fl_exist = (file_exist(FILE_PATH_1) || file_exist(FILE_PATH_2));  //ver se complia
-
     int* ack;
+
     if((ack = (int*) malloc(sizeof(int))) == NULL) {
         fprintf(stderr, "Erro ao alocar memoria");
     }
@@ -319,6 +319,8 @@ int main(int argc, char **argv){
         free(ack);
         return -1;
     }
+
+    o_server -> ip_port = NULL;
 
     if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) { // essensial!
         printf("Erro ao criar servidor!");
@@ -447,7 +449,7 @@ int main(int argc, char **argv){
             *ack = 0;
 
             while(!*ack) {
-                if((network_receive_send(o_server->socket, ack)) < 0){//servidor secundario sem tabelas
+                if((network_receive_send(o_server -> socket, ack)) < 0){//servidor secundario sem tabelas
                     fprintf(stderr, "Erro ao atualizar tabelas!");
                     free(o_server -> ip_port);
                     free(o_server);
@@ -558,7 +560,7 @@ int main(int argc, char **argv){
                     }
                     long connect_ip = htonl(atol(strtok(o_server -> ip_port, ":")));
                     if(connect_ip == addr2.sin_addr.s_addr) {//server secundario
-                        o_server->socket = socket_client;
+                        o_server -> socket = socket_client;
                         if(rtables_sz_tbles(o_server,lista_tabelas,argc-3) == -1) {
                              o_server -> state = 0;
                         }
@@ -609,14 +611,14 @@ int main(int argc, char **argv){
                 }
                 else{
                     *ack = 0;
-                    printf("____%d____",o_server->state);
+                    //printf("____%d____" ,o_server -> state);
                     fflush(stdout);
                     if(!primario && i!=2){
                         primario = 1;
                         o_server -> state = 0;
                         }
-                    printf("____%d____",o_server->state);  
-                    if((net_r_s = network_receive_send(connections[i].fd, o_server->state?ack:NULL)) == -1){
+                    //printf("____%d____",o_server -> state);  
+                    if((net_r_s = network_receive_send(connections[i].fd, o_server -> state?ack:NULL)) == -1){
                         close(connections[i].fd);
                         connections[i].fd = -1;
                         connections[i].events = 0;
@@ -658,12 +660,16 @@ int main(int argc, char **argv){
         free(lista_tabelas[i]);
     }
 
-
     free(lista_tabelas);}
 
     free(o_server -> ip_port);
     free(o_server);
     free(ack);
-
+    if(primario){
+        remove(FILE_PATH_1);
+    }
+    if(!primario){
+        remove(FILE_PATH_2);
+    }
     return 0;
 }
