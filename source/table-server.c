@@ -200,7 +200,8 @@ int network_receive_send(int sockfd, int* ack){
         if((r = (int*) malloc(sizeof(int))) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria");
         }
-        server -> socket = sockfd;
+        server -> socket = sockfd;//FIXME:
+
         
         pthread_p.msg = msg_pedido;
         pthread_p.server = server;
