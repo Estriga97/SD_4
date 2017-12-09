@@ -13,7 +13,7 @@
 static int quit = 0;
 int nTables;
 static int primario; // 1 = primario, 0 = secundario
-struct server_t* o_server;
+static struct server_t* o_server;
 pthread_mutex_t dados = PTHREAD_MUTEX_INITIALIZER;
 
 ///////////////////////////////////  file_exist  /////////////////////////////////////////////////////////
@@ -206,7 +206,7 @@ int network_receive_send(int sockfd, int* ack){
         if (pthread_join(nova, (void **) &r) != 0){
 		    fprintf(stderr, "Erro no join.");
         }
-        if(*r != 0) {
+        if(*r == 0) {
             *ack = 1;
         }
         free(r);
@@ -572,6 +572,7 @@ int main(int argc, char **argv){
         else{
             i = 1;
         }
+         struct server_t* server = o_server;
         while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
             if (connections[i].revents & POLLIN) {
                 if(i == 2){ //stdin
@@ -593,10 +594,13 @@ int main(int argc, char **argv){
                 }
                 else{
                     *ack = 0;
+                    printf("____%d____",o_server->state);
+                    fflush(stdout);
                     if(!primario && i!=2){
                         primario = 1;
                         o_server -> state = 0;
-                        }    
+                        }
+                    printf("____%d____",o_server->state);  
                     if((net_r_s = network_receive_send(connections[i].fd, o_server->state?ack:NULL)) == -1){
                         close(connections[i].fd);
                         connections[i].fd = -1;
@@ -610,7 +614,7 @@ int main(int argc, char **argv){
                         fprintf(stderr, "Operação falhou"); //*
                     }
                     if(ack != 0) {
-                        o_server -> state = 0;
+                        o_server -> state = 0;//esta
                     }
                     
                 }
