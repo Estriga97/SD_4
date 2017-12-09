@@ -176,7 +176,7 @@ int network_receive_send(int sockfd, int* ack){
     if(msg_pedido->table_num == -1){
          if((msg_resposta = invoke_server_version(msg_pedido))==NULL)
             return -2;
-         if(msg_resposta -> opcode == OC_ACK) {
+         if(msg_resposta -> opcode == (OC_ACK + 1)) {
             *ack = 1;
          }
     }
@@ -388,6 +388,7 @@ int main(int argc, char **argv){
             free(lista_tabelas[i]);
         }
         free(lista_tabelas);
+        free(o_server -> ip_port);
 
     }
 
@@ -448,15 +449,16 @@ int main(int argc, char **argv){
 
             while(!*ack) {
                 if((network_receive_send(o_server->socket, ack)) < 0){
-                       fprintf(stderr, "Erro ao atualizar tabelas");
-                        free(o_server -> ip_port);
-                        free(o_server);
-                        free(addr);
-                        remove(FILE_PATH_2);
-                return -1;
+                    fprintf(stderr, "Erro ao atualizar tabelas!");
+                    //free(o_server -> ip_port);
+                    remove(FILE_PATH_2);
+                    break;
+                    //return -1;   
                 }
             }
-            //free(addr);
+
+            free(addr);
+            free(ack);
         }
 
     }
@@ -644,7 +646,8 @@ int main(int argc, char **argv){
     for(i = 0; i < nSockets; i++){
         close(connections[i].fd);
     }
-
+    
+    //free(o_server -> ip_port); //// ESTA UM FREE IGUAL NA LINHA 391
     free(o_server);
 
     return 0;
