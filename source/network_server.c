@@ -155,6 +155,7 @@ int server_connect(struct server_t* server){
 	struct sockaddr_in* addr;
 	if((addr = malloc(sizeof(struct sockaddr_in))) == NULL) {
 		fprintf(stderr, "Erro ao alocar memoria!");
+		free(ip_porta);
 		return -1;
 	}
 	char* token = strtok(ip_porta, ":");
@@ -162,6 +163,8 @@ int server_connect(struct server_t* server){
 	addr-> sin_family = AF_INET;
 	if (inet_pton(AF_INET, token, &(addr-> sin_addr)) < 1) {
 		printf("Erro ao converter IP\n");
+		free(addr);
+		free(ip_porta);
 		return -1;
 		}
 
@@ -169,18 +172,24 @@ int server_connect(struct server_t* server){
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		fprintf(stderr, "Erro ao criar socket TCP!");
+		free(ip_porta);
+		free(addr);
 		return -1;
 	}
 
 	// Estabelece conexão com o servidor definido em server
 	if (connect(sockfd,(struct sockaddr *)addr, sizeof(*addr)) < 0) {
 		fprintf(stderr, "Erro ao conectar-se ao servidor!");
+		free(ip_porta);
+		free(addr);
 		close(sockfd);
 		return -1;
-}
+	}
     server -> socket = sockfd;
     server -> state = 1;
 
 	free(addr);
+	free(ip_porta);
+
 	return 0;
 }
