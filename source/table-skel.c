@@ -209,14 +209,16 @@ struct message_t* invoke_server_version(struct message_t* msg_pedido){
         case OC_SZ_TABLES:
             if(table_skel_init(msg_pedido -> content.keys) == -1)//init
                 return NULL;
-            msg_resposta  -> opcode = OC_SZ_TABLES;
-            msg_resposta  -> c_type =  CT_RESULT;
-            msg_resposta  -> table_num = -1; 
+            msg_resposta -> opcode = OC_SZ_TABLES + 1;/////// VE ISTO ESTUSPIDO97
+            msg_resposta -> c_type =  CT_RESULT;
+            msg_resposta -> table_num = -1; 
+            msg_resposta -> content.result = 0; /////// VE ISTO ESTUSPIDO97
         break;
         case OC_ACK:
-            msg_resposta  -> opcode = OC_ACK;
-            msg_resposta  -> c_type = CT_RESULT;
-            msg_resposta  -> table_num = -1;
+            msg_resposta -> opcode = OC_ACK + 1;/////// VE ISTO ESTUSPIDO97
+            msg_resposta -> c_type = CT_RESULT;
+            msg_resposta -> table_num = -1;
+            msg_resposta -> content.result = 0;/////// VE ISTO ESTUSPIDO97
         break;
     }
 
