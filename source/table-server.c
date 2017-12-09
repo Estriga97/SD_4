@@ -316,11 +316,13 @@ int main(int argc, char **argv){
     }
     if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essensial!
         fprintf(stderr, "Erro ao preparar o_server!");
+        free(ack);
         return -1;
     }
 
     if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) { // essensial!
         printf("Erro ao criar servidor!");
+        free(ack);
         return -1;
     }
     if(argc > 2 && !fl_exist) { //primario
@@ -328,6 +330,8 @@ int main(int argc, char **argv){
 
         if((o_server -> ip_port = strdup(argv[2])) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria");
+            free(o_server);
+            free(ack);
             return -1;
         }
         o_server -> state = 0; // DOWN
@@ -337,6 +341,9 @@ int main(int argc, char **argv){
         // criar ficheiro no primario
         if((fd = fopen(FILE_PATH_1,"w")) == NULL) { // essensial!
             fprintf(stderr, "Erro ao criar ficheiro");
+            free(ack);
+            free(o_server);
+            free(o_server -> ip_port);
             return -1;
         }
         fprintf(fd,"%s", o_server -> ip_port);
@@ -345,6 +352,9 @@ int main(int argc, char **argv){
 
         if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) { // essensial!
             fprintf(stderr, "Erro ao preparar lista_tabelas!");
+            free(o_server);
+            free(ack);
+            free(o_server -> ip_port);
             return -1;
         }
         
@@ -357,6 +367,8 @@ int main(int argc, char **argv){
                 free(o_server);
                 free(ack);
                 fprintf(stderr, "Erro ao preparar lista_tabelas[i-2]!");
+                free(o_server);
+                free(o_server -> ip_port);
                 return -1;
             }
             memcpy(lista_tabelas[i-3],argv[i],strlen(argv[i])+1);
@@ -366,6 +378,9 @@ int main(int argc, char **argv){
         
         if((table_skel_init(lista_tabelas)) == -1) { // essensial!
             fprintf(stderr, "Erro ao criar tabelas");
+            free(ack);
+            free(o_server);
+            free(o_server -> ip_port);
             return -1;
         }
         if(server_connect(o_server) < 0)
@@ -642,8 +657,10 @@ int main(int argc, char **argv){
     for(i = 0; i < argc-2; i++ ){
         free(lista_tabelas[i]);
     }
+
+
     free(lista_tabelas);}
-        
+
     free(o_server -> ip_port);
     free(o_server);
     free(ack);
