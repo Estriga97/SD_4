@@ -40,7 +40,8 @@ struct server_t *network_connect(const char *address_port){
 		fprintf(stderr, "Erro ao alocar memoria!");
 		return NULL;
 	}
-	char* token = strtok((char*)address_port,":");
+	char* bckup = strdup(address_port);
+	char* token = strtok((char*) bckup,":");
 	printf("%s",token);
 	fflush(stdout);
 

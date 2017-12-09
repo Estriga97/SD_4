@@ -70,6 +70,11 @@ int main(int argc, char **argv){
 			}
 			while(tentativas < MAX_TENTATIVA && rtables == NULL );
 
+			if(rtables == NULL) {
+				fprintf(stderr, "Nenhum servidor online");
+				return -1;
+			}
+
 			rtables -> server -> ip_port_primario = strdup(argv[1]);
 			rtables -> server -> ip_port_secundario = strdup(argv[2]);
 		}
