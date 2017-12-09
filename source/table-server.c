@@ -85,6 +85,11 @@ int make_server_socket(short port){
     server.sin_port = htons(port);
     server.sin_addr.s_addr = htonl(INADDR_ANY);
 
+    int sim = 1;
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
+        perror("Erro no setsockopt");
+    }
+
     if (bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
         fprintf(stderr, "Erro ao fazer bind!");
         close(socket_fd);
@@ -95,10 +100,6 @@ int make_server_socket(short port){
         fprintf(stderr, "Erro ao executar listen");
         close(socket_fd);
         return -1;
-    }
-    int sim = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
-        perror("Erro no setsockopt");
     }
 
     return socket_fd;
@@ -206,9 +207,10 @@ int network_receive_send(int sockfd, int* ack){
         if (pthread_join(nova, (void **) &r) != 0){
 		    fprintf(stderr, "Erro no join.");
         }
-        if(*r == 0) {
+        if(*r != 0) {
             *ack = 1;
         }
+
         free(r);
 
     }}
@@ -334,7 +336,6 @@ int main(int argc, char **argv){
             free(ack);
             return -1;
         }
-        o_server -> state = 0; // DOWN
 
 
         FILE* fd;
@@ -609,13 +610,12 @@ int main(int argc, char **argv){
                 }
                 else{
                     *ack = 0;
-                    printf("____%d____",o_server->state);
                     fflush(stdout);
-                    if(!primario && i!=2){
+                    if(!primario && i!=1){//MAGIC NUMBER
                         primario = 1;
                         o_server -> state = 0;
                         }
-                    printf("____%d____",o_server->state);  
+                     
                     if((net_r_s = network_receive_send(connections[i].fd, o_server->state?ack:NULL)) == -1){
                         close(connections[i].fd);
                         connections[i].fd = -1;
@@ -628,7 +628,7 @@ int main(int argc, char **argv){
                     else if(net_r_s == -2){
                         fprintf(stderr, "Operação falhou"); //*
                     }
-                    if(ack != 0) {
+                    if(*ack != 0) {
                         o_server -> state = 0;//esta
                     }
                     
