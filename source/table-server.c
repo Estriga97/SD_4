@@ -525,10 +525,11 @@ int main(int argc, char **argv){
     }
     connections[0].fd = listening_socket;
     connections[0].events = POLLIN;
-    connections[1].fd = fileno(stdin);
+    connections[1].fd = o_server -> socket; // tem de ser adaptado??
     connections[1].events = POLLIN;
-    connections[2].fd = o_server -> socket; // tem de ser adaptado??
+    connections[2].fd = fileno(stdin);
     connections[2].events = POLLIN;
+    
 
     while(!quit){ /* espera por dados nos sockets abertos */
         res = poll(connections, nSockets, -1);
@@ -576,10 +577,14 @@ int main(int argc, char **argv){
             }
     }
     /* um dos sockets de ligação tem dados para ler */
-        i = 1;
+        if(primario)
+            i = 2;
+        else{
+            i = 1;
+        }
         while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
             if (connections[i].revents & POLLIN) {
-                if(i == 1){ //stdin
+                if(i == 2){ //stdin
                     char input[1000];
                     fgets(input, 1000, stdin);
                     char spliters[] = " ";
@@ -598,7 +603,7 @@ int main(int argc, char **argv){
                 }
                 else{
                     *ack = 0;
-                    if(!primario){
+                    if(!primario && i!=2){
                         primario = 1;
                         o_server -> state = 0;
                         }    
