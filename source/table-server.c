@@ -187,6 +187,7 @@ int network_receive_send(int sockfd, int* ack){
     else{
         msg_resposta = invoke(msg_pedido); //*
         
+        if(ack!=NULL){
         pthread_t nova;
         struct thread_param_t pthread_p;
         pthread_p.msg = msg_pedido;
@@ -219,7 +220,7 @@ int network_receive_send(int sockfd, int* ack){
         free(server);
         free(r);
 
-    }
+    }}
 
     imprimir_resposta(msg_resposta);
 	/* Serializar a mensagem recebida */
@@ -314,9 +315,19 @@ void* pthread_main(void* params) {
 int main(int argc, char **argv){
     printf("%s",argv[0]);
     fflush(stdout);
+    char ** lista_tabelas;
     int listening_socket,i;
     struct server_t* o_server;
     int fl_exist = (file_exist(FILE_PATH_1) || file_exist(FILE_PATH_2));  //ver se complia
+
+    int* ack;
+    if((ack = (int*) malloc(sizeof(int))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria");
+    }
+    if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essensial!
+        fprintf(stderr, "Erro ao preparar o_server!");
+        return -1;
+    }
 
     if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) { // essensial!
         printf("Erro ao criar servidor!");
@@ -324,10 +335,6 @@ int main(int argc, char **argv){
     }
     if(argc > 2 && !fl_exist) { //primario
         primario = 1;
-        if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essensial!
-        	fprintf(stderr, "Erro ao preparar o_server!");
-        	return -1;
-        }
 
         if((o_server -> ip_port = strdup(argv[2])) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria");
@@ -345,7 +352,6 @@ int main(int argc, char **argv){
         fprintf(fd,"%s", o_server -> ip_port);
         fclose(fd);
 
-        char ** lista_tabelas;
 
         if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) { // essensial!
             fprintf(stderr, "Erro ao preparar lista_tabelas!");
@@ -358,6 +364,8 @@ int main(int argc, char **argv){
                     free(lista_tabelas[i-3]);
                     i--;
                 }
+                free(o_server);
+                free(ack);
                 fprintf(stderr, "Erro ao preparar lista_tabelas[i-2]!");
                 return -1;
             }
@@ -383,12 +391,6 @@ int main(int argc, char **argv){
                 }
             }
         }
-        // libertação das tabelas usadas para passar a informação para o secundario
-        for(i = 0; i < argc-2; i++ ){
-            free(lista_tabelas[i]);
-        }
-        free(lista_tabelas);
-        free(o_server -> ip_port);
 
     }
 
@@ -396,10 +398,6 @@ int main(int argc, char **argv){
 
     else if(argc == 2 && !fl_exist){ //secundario
         primario = 0;
-        if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essensial!
-            fprintf(stderr, "Erro ao preparar o_server!");
-            return -1;
-        }
         if((o_server -> socket = accept(listening_socket,NULL,NULL)) != -1){
             struct sockaddr_in* addr;
             int addr_len = sizeof(struct sockaddr_in);
@@ -440,25 +438,23 @@ int main(int argc, char **argv){
             }
             fprintf(fd,"%s", o_server -> ip_port);
             fclose(fd);*/
-
-            int* ack;
-            if((ack = (int*) malloc(sizeof(int))) == NULL) {
-            //*
-            }
+           
             *ack = 0;
 
             while(!*ack) {
-                if((network_receive_send(o_server->socket, ack)) < 0){
+                if((network_receive_send(o_server->socket, ack)) < 0){//servidor secundario sem tabelas
                     fprintf(stderr, "Erro ao atualizar tabelas!");
-                    //free(o_server -> ip_port);
+                    free(o_server -> ip_port);
+                    free(o_server);
+                    free(ack);
+                    free(addr);
                     remove(FILE_PATH_2);
-                    break;
-                    //return -1;   
+                    return -1;   
                 }
             }
 
             free(addr);
-            free(ack);
+            
         }
 
     }
@@ -468,10 +464,6 @@ int main(int argc, char **argv){
     else if(fl_exist) { //recuperação (como secundario)
         FILE* fd;
         char buff_read [MAX_READ];
-        if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essensial!
-            fprintf(stderr, "Erro ao alocar memoria");
-            //fzr n sei o q neste caso de erro
-        }
         if(argc  > 2) {
             if((fd = fopen(FILE_PATH_1,"r")) == NULL) { // essensial!
                 fprintf(stderr, "Erro ao encontrar ficheiro");
@@ -559,7 +551,11 @@ int main(int argc, char **argv){
                         continue;
                     }
                     long connect_ip = htonl(atol(strtok(o_server -> ip_port, ":")));
-                    if(connect_ip == addr2.sin_addr.s_addr) {
+                    if(connect_ip == addr2.sin_addr.s_addr) {//server secundario
+                        o_server->socket = socket_client;
+                        if(rtables_sz_tbles(o_server,lista_tabelas,argc-3) == -1) {
+                             o_server -> state = 0;
+                        }
                         for(i = 0 ; i < nTables;i++){
                             struct entry_t* lista_entrys = get_tbl_keys(i);
                             while(lista_entrys -> key != NULL){
@@ -567,12 +563,12 @@ int main(int argc, char **argv){
                                 lista_entrys++;
                             }
                         }
-                    }
+                    }else{//cliente
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_client;
                     connections[nSockets].events = POLLIN;
                     res = write_all(socket_client, (char *) &num_tables, _INT);
-                    nSockets++;
+                    nSockets++;}
                 }
                 else {
                     fprintf(stderr, "Erro ao aceitar client");
@@ -601,16 +597,12 @@ int main(int argc, char **argv){
                     }
                 }
                 else{
-                    int* ack;
-                    if((ack = (int*) malloc(sizeof(int))) == NULL) {
-                        fprintf(stderr, "Erro ao alocar memoria");
-                    }
                     *ack = 0;
                     if(!primario){
                         primario = 1;
                         o_server -> state = 0;
-                        }
-                    if((net_r_s = network_receive_send(connections[i].fd, ack)) == -1){
+                        }    
+                    if((net_r_s = network_receive_send(connections[i].fd, o_server->state?ack:NULL)) == -1){
                         close(connections[i].fd);
                         connections[i].fd = -1;
                         connections[i].events = 0;
@@ -646,9 +638,16 @@ int main(int argc, char **argv){
     for(i = 0; i < nSockets; i++){
         close(connections[i].fd);
     }
-    
-    //free(o_server -> ip_port); //// ESTA UM FREE IGUAL NA LINHA 391
+     // libertação das tabelas usadas para passar a informação para o secundario
+    if(argc>2){
+    for(i = 0; i < argc-2; i++ ){
+        free(lista_tabelas[i]);
+    }
+    free(lista_tabelas);}
+        
+    free(o_server -> ip_port);
     free(o_server);
+    free(ack);
 
     return 0;
 }
