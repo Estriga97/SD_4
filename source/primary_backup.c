@@ -96,6 +96,7 @@ int rtables_ack(struct server_t *server) {
     msg_ack -> opcode = OC_ACK;
     msg_ack -> c_type = CT_RESULT;
     msg_ack -> table_num = -1;
+    msg_ack -> content.result = 0;/////// VE ISTO ESTUSPIDO97
 
         
     struct message_t* msg_resposta = network_send_receive(server, msg_ack);
