@@ -298,3 +298,6 @@ struct entry_t* get_tbl_keys(int n) {
     }
 
 }
+int get_n_tabelas(){
+    return n_tabelas;
+}
