@@ -542,9 +542,9 @@ int main(int argc, char **argv){
                     fprintf(stderr, "Erro ao aceitar client");
                 }
             }
-    }
-    /* um dos sockets de ligação tem dados para ler */
-       
+        }
+        /* um dos sockets de ligação tem dados para ler */
+        i = 0;
         while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
             if (connections[i].revents & POLLIN) {
                 if(i == 2){ //stdin
