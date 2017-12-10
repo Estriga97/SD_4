@@ -288,7 +288,7 @@ int read_all(int sock, char *buf, int len){
 		}
 	buf += res;
 	len -= res;
-		}
+	}
 	return bufsize;
 }
 

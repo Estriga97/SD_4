@@ -47,7 +47,9 @@ struct server_t *network_connect(const char *address_port){
 	addr-> sin_family = AF_INET;
 	if (inet_pton(AF_INET, token, &(addr-> sin_addr)) < 1) {
 		printf("Erro ao converter IP\n");
+		free(addr);
 		free(server);
+		free(bckup);
 		return NULL;
 		}
 
@@ -55,7 +57,9 @@ struct server_t *network_connect(const char *address_port){
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		fprintf(stderr, "Erro ao criar socket TCP! \n");
+		free(addr);
 		free(server);
+		free(bckup);
 		return NULL;
 	}
 
@@ -63,6 +67,8 @@ struct server_t *network_connect(const char *address_port){
 	if (connect(sockfd,(struct sockaddr *)addr, sizeof(*addr)) < 0) {
 		fprintf(stderr, "Erro ao conectar-se ao servidor! \n");
 		free(server);
+		free(addr);
+		free(bckup);
 		close(sockfd);
 		return NULL;
 }

@@ -326,7 +326,7 @@ int main(int argc, char **argv){
     if((ack = (int*) malloc(sizeof(int))) == NULL) {
         fprintf(stderr, "Erro ao alocar memoria \n");
     }
-    if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essensial!
+    if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essencial!
         fprintf(stderr, "Erro ao preparar o_server! \n");
         free(ack);
         return -1;
@@ -340,6 +340,9 @@ int main(int argc, char **argv){
         free(ack);
         return -1;
     }
+
+    //////////////////////////////////////////////////////////////////
+
     if(argc > 2 && !fl_exist) { //primario
         primario = 1;
 
@@ -547,7 +550,7 @@ int main(int argc, char **argv){
         i = 0;
         while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
             if (connections[i].revents & POLLIN) {
-                if(i == 2){ //stdin
+                if(i == 1){ //stdin
                     char input[1000];
                     fgets(input, 1000, stdin);
                     char spliters[] = " ";
@@ -593,13 +596,13 @@ int main(int argc, char **argv){
             }
 
             if (connections[i].revents & POLLERR ||connections[i].revents & POLLHUP) {
-            close(connections[i].fd);
-            connections[i].fd = -1;
-            connections[i].events = 0;
-            connections[i].revents = 0;
-            shift(connections,i);
-            nSockets--;
-            printf(" * Client is disconnected! \n");
+                close(connections[i].fd);
+                connections[i].fd = -1;
+                connections[i].events = 0;
+                connections[i].revents = 0;
+                shift(connections,i);
+                nSockets--;
+                printf(" * Client is disconnected! \n");
             }
             i++;
         }
