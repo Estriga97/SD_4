@@ -258,13 +258,15 @@ struct message_t* invoke_server_version(struct message_t* msg_pedido){
 struct entry_t* get_tbl_keys(int n) {
     struct table_t* tbl = tabelas[n];
     struct entry_t* tbl_res;
-    struct entry_t* entry_aux; 
+    struct entry_t* entry_aux =(struct entry_t*) malloc(sizeof(struct entry_t*)); 
     struct entry_t* table_init;
     if(tbl -> filled == 0) {
         fprintf(stderr, "Sem chaves \n");
-        return NULL;
+        entry_aux->key=NULL;
+        return entry_aux;
     }
     else {
+        free(entry_aux);
         if((tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*(tbl -> filled+1))) == NULL) {
             fprintf(stderr, "Erro ao alocar memoria! \n");
             return NULL;

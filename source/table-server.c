@@ -294,7 +294,7 @@ int network_receive_send(int sockfd, int* ack){
                     o_server -> state = 0;
                 }
             for(i = 0 ; i < nTables;i++){
-                struct entry_t* lista_entrys;
+                struct entry_t* lista_entrys;//TODO:free
                 if((lista_entrys = get_tbl_keys(i)) == NULL) {
                     fprintf(stderr, "Erro ao receber keys das tables");
                     return -1;
