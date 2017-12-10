@@ -214,12 +214,22 @@ int network_receive_send(int sockfd, int* ack){
             o_server ->socket = sockfd;
             int i;
             for(i = 0 ; i < nTables;i++){
-                struct entry_t* lista_entrys = get_tbl_keys(i);
+                struct entry_t* lista_entrys;
+                if((lista_entrys = get_tbl_keys(i)) == NULL) {
+                    fprintf(stderr, "Erro ao receber keys das tables");
+                    return -1;
+                }
                 while(lista_entrys -> key != NULL){
-                    rtables_put(o_server,i, (*lista_entrys).key, (*lista_entrys).value); // n ha if, TODO
+                    if(rtables_put(o_server,i, (*lista_entrys).key, (*lista_entrys).value) == -1) {
+                        fprintf(stderr, "Erro ao fazer put");
+                        return -1;
+                    }
                     lista_entrys++;
                 }
-                rtables_ack(o_server);
+                if(rtables_ack(o_server) == -1) {
+                    fprintf(stderr, "Erro ao receber ack");
+                    return -1;
+                }
             }
         }
     }
@@ -231,33 +241,32 @@ int network_receive_send(int sockfd, int* ack){
         }
         
         if(ack != NULL && msg_resposta->opcode != 99){
-        pthread_t nova;
-        struct thread_param_t pthread_p;
-        pthread_p.msg = msg_pedido;
+            pthread_t nova;
+            struct thread_param_t pthread_p;
+            pthread_p.msg = msg_pedido;
 
-        
-        int* r;
-        if((r = (int*) malloc(sizeof(int))) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria \n");
+            
+            int* r;
+            if((r = (int*) malloc(sizeof(int))) == NULL) {
+                fprintf(stderr, "Erro ao alocar memoria \n");
+            }
+            pthread_p.msg = msg_pedido;
+            pthread_p.server = o_server;
+            pthread_p.table_num = nTables;
+
+            if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
+                fprintf(stderr, "Thread não criada. \n");
+            }
+
+            if (pthread_join(nova, (void **) &r) != 0){
+                fprintf(stderr, "Erro no join. \n");
+            }
+            if(*r != 0) {
+                *ack = 1;
+            }
+            free(r);
         }
-        pthread_p.msg = msg_pedido;
-        pthread_p.server = o_server;
-        pthread_p.table_num = nTables;
-
-        if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
-		    fprintf(stderr, "Thread não criada. \n");
-        }
-
-        if (pthread_join(nova, (void **) &r) != 0){
-		    fprintf(stderr, "Erro no join. \n");
-        }
-        if(*r != 0) {
-            *ack = 1;
-        }
-
-        free(r);
-
-    }}
+    }
 
     imprimir_resposta(msg_resposta);
 	/* Serializar a mensagem recebida */
@@ -276,9 +285,7 @@ int network_receive_send(int sockfd, int* ack){
 	     logo de seguida
 	*/
     msg_size = htonl(message_size);
-   
-    
- 
+
  	result = write_all(sockfd, (char *) &msg_size, _INT);
 
     /* Verificar se o envio teve sucesso */
