@@ -177,6 +177,7 @@ int server_connect(struct server_t* server){
 		return -1;
 	}
 
+
 	// Estabelece conexão com o servidor definido em server
 	if (connect(sockfd,(struct sockaddr *)addr, sizeof(*addr)) < 0) {
 		fprintf(stderr, "Erro ao conectar-se ao servidor!");

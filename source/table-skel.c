@@ -6,8 +6,9 @@
 #include "inet.h"
 #include "table-private.h"
 #include "table_skel.h"
+#include "primary_backup-private.h"
 
-
+extern struct server_t *o_server;
 struct table_t** tabelas; 
 int n_tabelas;
 
@@ -218,13 +219,27 @@ struct message_t* invoke_server_version(struct message_t* msg_pedido){
             msg_resposta -> c_type =  CT_RESULT;
             msg_resposta -> table_num = -1; 
             msg_resposta -> content.result = 0;
-        break;
+            break;
         case OC_ACK:
             msg_resposta -> opcode = OC_ACK + 1;
             msg_resposta -> c_type = CT_RESULT;
             msg_resposta -> table_num = -1;
             msg_resposta -> content.result = 0;
-        break;
+            break;
+        case OC_IP_PORT:
+            msg_resposta -> opcode = OC_IP_PORT + 1;
+            msg_resposta -> c_type = CT_RESULT;
+            msg_resposta -> table_num = -1;
+            msg_resposta -> content.result = 0;
+            o_server->ip_port = strdup(msg_pedido->content.key);
+            break;
+        case OC_HELLO:
+            msg_resposta -> opcode = OC_IP_PORT + 1;
+            msg_resposta -> c_type = CT_RESULT;
+            msg_resposta -> table_num = -1;
+            msg_resposta -> content.result = 0;
+            o_server->state = 1;
+            break;
     }
 
     return msg_resposta;

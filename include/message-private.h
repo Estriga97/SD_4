@@ -7,6 +7,9 @@
 #define OC_RT_ERROR	99
 #define OC_SZ_TABLES 60
 #define OC_ACK 70
+#define OC_IP_PORT 80
+#define OC_HELLO 90
+
 
 
 /* Define códigos para os possíveis conteúdos da mensagem */

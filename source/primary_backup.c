@@ -24,6 +24,9 @@ int update_state(struct server_t *server) {
         if(res < 0)
             return -1;
     }
+
+    rtables_hello(server);
+
     int* ack;
         if((ack = (int*) malloc(sizeof(int))) == NULL) {
             //*
@@ -39,6 +42,32 @@ int update_state(struct server_t *server) {
 
     return res;
 
+}
+int rtables_ip_port(struct server_t *server,char* ip_port, int size) {
+    struct message_t* msg_tables;
+    if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria");
+        return -1;
+    }
+    
+    msg_tables -> opcode = OC_IP_PORT;
+    msg_tables -> c_type = CT_KEY;
+    msg_tables -> table_num = -1;
+
+    char* cnt_key = strdup(ip_port);//TODO:
+
+    msg_tables->content.key = cnt_key;
+    struct message_t* msg_resposta = network_send_receive(server, msg_tables);
+    if(msg_resposta == NULL){
+        imprimir_resposta(messgerror ());
+        free(msg_resposta);
+        free_message(msg_tables);
+        return -1;
+    }
+    imprimir_resposta(msg_resposta);
+    free_message(msg_tables);
+    free(msg_resposta);
+    return 0;
 }
 //////////////////////////////////// rtables_sz_tbles ////////////////////////////////////////////////////////
 
@@ -193,4 +222,30 @@ int rtables_update(struct server_t *server,int table_num, char *key, struct data
 
     return 0;
 
+}
+
+int rtables_hello(struct server_t *server) {
+    struct message_t* msg_ack;
+    if((msg_ack = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria");
+        return -1;
+    }
+        
+    msg_ack -> opcode = OC_HELLO;
+    msg_ack -> c_type = CT_RESULT;
+    msg_ack -> table_num = -1;
+    msg_ack -> content.result = 0;
+
+        
+    struct message_t* msg_resposta = network_send_receive(server, msg_ack);
+    if(msg_resposta == NULL){
+        imprimir_resposta(messgerror ());
+        free(msg_resposta);
+        free_message(msg_ack);
+        return -1;
+    }
+    imprimir_resposta(msg_resposta);
+    free(msg_resposta);
+    free(msg_ack);
+    return 0;
 }

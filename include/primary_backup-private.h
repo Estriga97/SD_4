@@ -6,10 +6,12 @@
 
 
 struct server_t {
-    char* ip_port;
+    char* ip_port;//FIXME:
     int state; // 0 = DOWN; 1 = UP
     int socket;
 };
+
+int rtables_ip_port(struct server_t *server,char* ip_port, int size);
 
 int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int size);
 
@@ -19,4 +21,5 @@ int rtables_put(struct server_t *server,int table_num, char *key, struct data_t 
 
 int rtables_update(struct server_t *server,int table_num, char *key, struct data_t *value);
 
+int rtables_hello(struct server_t *server);
 #endif
