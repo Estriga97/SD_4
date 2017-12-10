@@ -293,25 +293,33 @@ int network_receive_send(int sockfd, int* ack){
             if((rtables_sz_tbles(o_server,lista_tabelas,size_lista_tabelas)) == -1) {
                     o_server -> state = 0;
                 }
+            struct entry_t* lista_entrys;
             for(i = 0 ; i < nTables;i++){
-                struct entry_t* lista_entrys;//TODO:free
                 if((lista_entrys = get_tbl_keys(i)) == NULL) {
                     fprintf(stderr, "Erro ao receber keys das tables");
+                    free(lista_entrys);
                     return -1;
                 }
                 while((*lista_entrys).key != NULL){
                     if(rtables_put(o_server,i, (*lista_entrys).key, (*lista_entrys).value) == -1) {
                         fprintf(stderr, "Erro ao fazer put");
+                        free(lista_entrys);
                         return -1;
                     }
-                    lista_entrys++;
-                }
-                if(rtables_ack(o_server) == -1) {
-                    fprintf(stderr, "Erro ao receber ack");
-                    return -1;
+                lista_entrys++;
                 }
             }
+
+            if(rtables_ack(o_server) == -1) {
+                fprintf(stderr, "Erro ao receber ack");
+                free(lista_entrys);
+                return -1;
+            }
+            free(lista_entrys);
+            free(lista_entrys);
+            
         }
+    
 
 	/* Libertar memória */
     free_message(msg_pedido);
