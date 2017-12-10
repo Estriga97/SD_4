@@ -16,6 +16,8 @@
 #include "network_server.h"
 
 #define SOCKETS_NUMBER 7
+#define LISTENING_SOCKET 0
+#define STDIN_SOCKET 1
 #define MAX_READ 81
 #define FILE_PATH_1 "ip_1"
 #define FILE_PATH_2 "ip_2"

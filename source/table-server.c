@@ -30,6 +30,19 @@ int file_exist(const char* fl_nm) {
     }
 }
 
+///////////////////////////////////  file_remove  /////////////////////////////////////////////////////////
+
+void file_remove() {
+
+    if(primario){
+        remove(FILE_PATH_1);
+    }
+    if(!primario){
+        remove(FILE_PATH_2);
+    }
+
+}
+
 ///////////////////////////////////  shift  /////////////////////////////////////////////////////////
 
 void shift(struct pollfd* connects, int i) {
@@ -196,9 +209,13 @@ int network_receive_send(int sockfd, int* ack){
         }
     }
     else{
-        msg_resposta = invoke(msg_pedido); //*
+        if((msg_resposta = invoke(msg_pedido)) == NULL) {
+            free(message_pedido);
+            free_message(msg_pedido);
+            return -1;
+        }
         
-        if(ack!=NULL&& msg_resposta->opcode!=99){
+        if(ack != NULL && msg_resposta->opcode != 99){
         pthread_t nova;
         struct thread_param_t pthread_p;
         pthread_p.msg = msg_pedido;
@@ -486,7 +503,7 @@ int main(int argc, char **argv){
         o_server -> state = 1;
 
         if(update_state(o_server) < 0) // again, o q fzmos neste caso em q ele n consegue updatar as tabelas?
-            o_server -> state = 0; //*
+            o_server -> state = 0; //* averiguar casos de resposta -2 com o estriga. mas mt no final
         else {
             o_server -> state = 1;
             }
@@ -514,10 +531,10 @@ int main(int argc, char **argv){
         connections[i].events = 0;
         connections[i].revents = 0;
     }
-    connections[0].fd = listening_socket;
-    connections[0].events = POLLIN;
-    connections[1].fd = fileno(stdin);
-    connections[1].events = POLLIN;
+    connections[LISTENING_SOCKET].fd = listening_socket;
+    connections[LISTENING_SOCKET].events = POLLIN;
+    connections[STDIN_SOCKET].fd = fileno(stdin);
+    connections[STDIN_SOCKET].events = POLLIN;
     
 
     while(!quit){ /* espera por dados nos sockets abertos */
@@ -550,9 +567,9 @@ int main(int argc, char **argv){
         i = 0;
         while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
             if (connections[i].revents & POLLIN) {
-                if(i == 1){ //stdin
-                    char input[1000];
-                    fgets(input, 1000, stdin);
+                if(i == STDIN_SOCKET){
+                    char input[MAX_READ];
+                    fgets(input, MAX_READ, stdin);
                     char spliters[] = " ";
                     input[strlen(input)-1] = '\0';
                     char* comando = strtok(input, spliters);
@@ -616,20 +633,17 @@ int main(int argc, char **argv){
     }
      // libertação das tabelas usadas para passar a informação para o secundario
     if(argc>2){
-    for(i = 0; i < argc-2; i++ ){
-        free(lista_tabelas[i]);
+        for(i = 0; i < argc-2; i++ ){
+            free(lista_tabelas[i]);
+        }
+    free(lista_tabelas);
     }
-
-    free(lista_tabelas);}
 
     free(o_server -> ip_port);
     free(o_server);
     free(ack);
-    if(primario){
-        remove(FILE_PATH_1);
-    }
-    if(!primario){
-        remove(FILE_PATH_2);
-    }
+
+    file_remove();
+
     return 0;
 }

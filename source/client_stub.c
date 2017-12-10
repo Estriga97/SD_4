@@ -18,17 +18,19 @@ struct rtables_t *rtables_bind(const char *address_port){
 
     struct rtables_t * rtables;
     if((rtables = (struct rtables_t*) malloc(sizeof(struct rtables_t))) == NULL){
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return NULL;
     }
     struct server_t *server;
     if((server = network_connect(address_port)) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria \n");
         free(rtables);
         return NULL;
     }
     rtables -> server = server;
     int result;
     if(read_all(server->socket,(char*)&result, _INT) == -1) {
-		fprintf(stderr, "Erro ao read_all! \n");
+		fprintf(stderr, "Erro no read_all! \n");
         free(rtables);
         free(server);
 		return NULL;
@@ -84,6 +86,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     msg_out -> c_type = CT_ENTRY;
     msg_out -> table_num = rtables->table_num;
     if((msg_out -> content.entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria \n");
         free(msg_out);
         return -1;
     }
@@ -126,9 +129,9 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     msg_out -> c_type = CT_ENTRY;
     msg_out -> table_num = rtables->table_num;
     if((msg_out -> content.entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria \n");
         free(msg_out);
         free(msg_out -> content.entry);
-        fprintf(stderr, "Erro ao alocar memoria \n");
         return -1;
     }
     msg_out -> content.entry -> key = strdup(key);

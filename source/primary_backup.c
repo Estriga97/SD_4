@@ -32,20 +32,26 @@ int update_state(struct server_t *server) {
     }
     int* ack;
         if((ack = (int*) malloc(sizeof(int))) == NULL) {
-            //*
+            fprintf(stderr, "Erro ao alocar memoria \n");
+            return -1;
         }
     *ack = 0;
 
     while(!*ack) {
-        if((res = network_receive_send(server->socket, ack)) < 0)
+        if((res = network_receive_send(server->socket, ack)) < 0) {
+            free(ack);
+            fprintf(stderr, "Erro no network_receive_send \n");
             return -1;
+        }
     }
-        
     free(ack);
 
     return res;
 
 }
+
+///////////////////////////////// rtables_ip_port ///////////////////////////////////////////////////////////////
+
 int rtables_ip_port(struct server_t *server,char* ip_port, int size) {
     struct message_t* msg_tables;
     if((msg_tables = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
@@ -57,7 +63,7 @@ int rtables_ip_port(struct server_t *server,char* ip_port, int size) {
     msg_tables -> c_type = CT_KEY;
     msg_tables -> table_num = -1;
 
-    char* cnt_key = strdup(ip_port);//TODO:
+    char* cnt_key = strdup(ip_port);
 
     msg_tables->content.key = cnt_key;
     struct message_t* msg_resposta = network_send_receive(server, msg_tables);
@@ -86,8 +92,10 @@ int rtables_sz_tbles(struct server_t *server,char** lst_tbls, int size) {
     msg_tables -> table_num = -1;
 
     char** cnt_keys;
-    if((cnt_keys = (char**) malloc(sizeof(char*)*(size+1))) == NULL)
+    if((cnt_keys = (char**) malloc(sizeof(char*)*(size+1))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return -1;
+    }
         
     int i;
     for(i = 0; i < size; i++) {
@@ -226,6 +234,8 @@ int rtables_update(struct server_t *server,int table_num, char *key, struct data
     return 0;
 
 }
+
+///////////////////////////// rtables_hello /////////////////////////////////////////////////////////////
 
 int rtables_hello(struct server_t *server) {
     struct message_t* msg_ack;

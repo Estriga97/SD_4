@@ -17,8 +17,6 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	int message_size, msg_size, result,i;
 	struct message_t* msg_resposta;
 
-
-
 	/* Serializar a mensagem recebida */
 	message_size = message_to_buffer(msg, &message_out);
    
@@ -27,17 +25,17 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		fprintf(stderr, "Erro no tamanho da mensagem! \n");
 		free(message_out);
 		free_message(msg);
-		return messgerror ();}
+		return messgerror ();
+	}
 
-	/* Enviar ao servidor o tamanho da mensagem que será enviada
-	   logo de seguida
-	*/
+	/* Enviar ao servidor o tamanho da mensagem que será enviada logo de seguida */
 	msg_size = htonl(message_size);
  	while((result = write_all(server->socket, (char *) &msg_size, _INT)) == -1 && i!= 1){
 		sleep(5);
 		i++;
-	 }
-	 i = 0;
+	}
+	i = 0;
+
 	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
 		fprintf(stderr, "Erro ao enviar! \n");
@@ -50,8 +48,8 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	while((result = write_all(server->socket, message_out, message_size)) == -1 && i!= 1){
 		sleep(5);
 		i++;
-	 }
-	 i = 0;
+	}
+	i = 0;
 	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
 		fprintf(stderr, "Erro ao enviar! \n");
@@ -74,7 +72,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	int size;
 
 	while((result = read_all(server->socket,(char*) &size, _INT) ) == -1 && i!= 1){
-		//sleep(5);
+		//sleep(5); ?????? TODO!!
 		i++;
 	 }
 	 i = 0;

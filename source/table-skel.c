@@ -36,7 +36,13 @@ int table_skel_init(char **n_tables){
     return -1;
   }
   while(i < size) {
-    tabelas[i] = table_create(atoi(n_tables[i]));
+    if((tabelas[i] = table_create(atoi(n_tables[i]))) == NULL) {
+      while (i > 0) {
+        free(tabelas[i]);
+        i--;
+      }
+      return -1;
+    }
     i++;
   }
 
@@ -165,7 +171,8 @@ struct message_t *invoke(struct message_t *msg_in){
           }
           else if(val_get== NULL){
             msg_resposta -> c_type = CT_VALUE;
-            msg_resposta -> content.data = data_create2(0, NULL);}
+            msg_resposta -> content.data = data_create2(0, NULL); // q fzr neste caso? averiguar à mesma?
+          }
           else{
             msg_resposta -> c_type = CT_VALUE;
             msg_resposta -> content.data = val_get;
@@ -207,14 +214,18 @@ void get_keys(int n){
 struct message_t* invoke_server_version(struct message_t* msg_pedido){
 
     struct message_t* msg_resposta;
-    if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t))) == NULL)
+    if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
+        fprintf(stderr, "Erro ao alocar memoria! \n");
         return NULL;
+    }
     
     short opcode = msg_pedido->opcode;
     switch (opcode) {
         case OC_SZ_TABLES:
-            if(table_skel_init(msg_pedido -> content.keys) == -1)//init
+            if(table_skel_init(msg_pedido -> content.keys) == -1) {
+                fprintf(stderr, "Erro ao inicializar tabelas! \n");
                 return NULL;
+            }
             msg_resposta -> opcode = OC_SZ_TABLES + 1;
             msg_resposta -> c_type =  CT_RESULT;
             msg_resposta -> table_num = -1; 
@@ -241,9 +252,7 @@ struct message_t* invoke_server_version(struct message_t* msg_pedido){
             o_server->state = 1;
             break;
     }
-
     return msg_resposta;
-    
 }
 
 struct entry_t* get_tbl_keys(int n) {
@@ -252,10 +261,14 @@ struct entry_t* get_tbl_keys(int n) {
     struct entry_t* entry_aux; 
     struct entry_t* table_init;
     if(tbl -> filled == 0) {
+        fprintf(stderr, "Sem chaves \n");
         return NULL;
     }
     else {
-        tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*(tbl -> filled+1));
+        if((tbl_res = (struct entry_t*) malloc(sizeof(struct entry_t*)*(tbl -> filled+1))) == NULL) {
+            fprintf(stderr, "Erro ao alocar memoria! \n");
+            return NULL;
+        }
         table_init = tbl_res;
         int i;
         for(i = tbl -> datasize - 1; i >= 0 && tbl -> entrys[i].key!=NULL ; i--) {

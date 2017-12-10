@@ -38,7 +38,6 @@ int main(int argc, char **argv){
 		printf(">>> "); // Mostrar a prompt para inserção de comando
 
 		if(rtables == NULL){
-
 			int tentativas = 0;
 			//tentar as conecçoes ao servidor principal seguido do servidor secundario
 			do {
@@ -53,8 +52,7 @@ int main(int argc, char **argv){
 					}		
 					else{
 						rtables -> server -> server_type = 1;
-						fprintf(stderr, "Ligado ao servidor principal. \n");
-					
+						fprintf(stderr, "Ligado ao servidor principal. \n");					
 					}
 					if(rtables==NULL){
 					/* Usar network_connect para estabelcer ligação ao servidor secundario */
@@ -66,7 +64,8 @@ int main(int argc, char **argv){
 						rtables -> server -> server_type = 0;
 						fprintf(stderr, "Ligado ao servidor secundario. \n");
 					}
-					tentativas++;}
+					tentativas++;
+				}
 			}
 			while(tentativas < MAX_TENTATIVA && rtables == NULL );
 
@@ -96,7 +95,7 @@ int main(int argc, char **argv){
 		 */
 		if(!strcasecmp(comando,"quit")){
 			condicao = 0;
-			rtables_unbind(rtables);
+			return rtables_unbind(rtables);
 		}
 
 		/* Caso contrário:
@@ -151,20 +150,19 @@ int main(int argc, char **argv){
 				if(!strcmp((key_aux = strtok(NULL, spliters)),"*")){
 					char** keys = rtables_get_keys(rtables);
 					if(keys == NULL){
-						fprintf(stderr, "Erro no commando get! \n");
-						rtables_unbind(rtables);
+						fprintf(stderr, "Erro no commando get! \n"); 
+						rtables_unbind(rtables); //queremos msm mandar unbind aqui?
 					}
 					else{
 						rtables_free_keys(keys);
 					}
 				}
-
 				else{
 					key = strdup(key_aux);
 					struct data_t* datatemp = rtables_get(rtables, key);
 					if(datatemp == NULL){
 						fprintf(stderr, "Erro no commando get! \n");
-						rtables_unbind(rtables);
+						rtables_unbind(rtables); //queremos msm mandar unbind aqui?
 					}
 					else{
 						free(datatemp -> data);

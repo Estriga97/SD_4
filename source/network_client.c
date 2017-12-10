@@ -94,10 +94,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	int message_size, msg_size, result,i;
 	struct message_t* msg_resposta;
 
-
-
 	do{
-
 
 	/* Serializar a mensagem recebida */
 	message_size = message_to_buffer(msg, &message_out);
@@ -106,8 +103,11 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	if(message_size == -1) {
 		fprintf(stderr, "Erro no tamanho da mensagem! \n");
 		tentativas++;
-		switch_server(server);
-		continue;}
+		if((switch_server(server)) == -1) {
+			return NULL;
+		}
+		continue;
+	}
 
 	/* Enviar ao servidor o tamanho da mensagem que será enviada
 	   logo de seguida
@@ -116,14 +116,16 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
  	while((result = write_all(server->socket, (char *) &msg_size, _INT)) == -1 && i!= 1){
 		sleep(5);
 		i++;
-	 }
-	 i = 0;
+	}
+	i = 0;
 	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
 		fprintf(stderr, "Erro ao enviar! \n");
 		free(message_out);
 		tentativas++;
-		switch_server(server);
+		if((switch_server(server)) == -1) {
+			return NULL;
+		}
 		continue;;
 	}
 
@@ -131,14 +133,16 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	while((result = write_all(server->socket, message_out, message_size)) == -1 && i!= 1){
 		sleep(5);
 		i++;
-	 }
-	 i = 0;
+	}
+	i = 0;
 	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
 		fprintf(stderr, "Erro ao enviar! \n");
 		free(message_out);
 		tentativas++;
-		switch_server(server);
+		if((switch_server(server)) == -1) {
+			return NULL;
+		}
 		continue;
 	}
 
@@ -154,18 +158,19 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		
 	*/
 	int size;
-
 	while((result = read_all(server->socket,(char*) &size, _INT) ) == -1 && i!= 1){
 		sleep(5);
 		i++;
-	 }
-	 i = 0;
+	}
+	i = 0;
 	
 	if(result == -1) {
 		fprintf(stderr, "Erro ao receber o tamanho da mensagem de resposta! \n");
 		free(message_out);
 		tentativas++;
-		switch_server(server);
+		if((switch_server(server)) == -1) {
+			return NULL;
+		}
 		continue;
 	}
 
@@ -175,7 +180,9 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta! \n");
 		free(message_out);
 		tentativas++;
-		switch_server(server);
+		if((switch_server(server)) == -1) {
+			return NULL;
+		}
 		continue;
 	}
 
@@ -190,7 +197,9 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		free(message_out);
 		free(buff);
 		tentativas++;
-		switch_server(server);
+		if((switch_server(server)) == -1) {
+			return NULL;
+		}
 		continue;
 	}
 
@@ -204,20 +213,22 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		free_message(msg_resposta);
 		free(buff);
 		tentativas++;
-		switch_server(server);
+		if((switch_server(server)) == -1) {
+			return NULL;
+		}
 		continue;
 	}
 
 	/* Libertar memória */
 	free(message_out);
 	free(buff);
-	sucesso = 1;}
+	sucesso = 1;
+}
 	while(!sucesso && tentativas < MAX_TENTATIVA);
 
 	if(!sucesso){
 		msg_resposta = messgerror ();
 	}
-
 	return msg_resposta;
 }
 
@@ -242,10 +253,16 @@ int switch_server(struct server_t *server){
 	struct server_t *new_server;
 
 	if(server -> server_type){
-		new_server = network_connect(server->ip_port_secundario);
+		if((new_server = network_connect(server->ip_port_secundario)) == NULL) {
+			fprintf(stderr, "Erro ao conectar ao outro servidor \n");
+			return -1;
+		}
 		
 	}else{
-		new_server = network_connect(server->ip_port_primario);
+		if((new_server = network_connect(server->ip_port_primario)) == NULL) {
+			fprintf(stderr, "Erro ao conectar ao outro servidor \n");
+			return -1;
+		}
 	}
 	new_server -> ip_port_secundario = server -> ip_port_secundario;
 	new_server -> ip_port_primario = server -> ip_port_primario;
