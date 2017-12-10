@@ -519,7 +519,7 @@ int main(int argc, char **argv){
 
     struct pollfd connections[SOCKETS_NUMBER];
     int num_tables = htonl(argc-3);
-    int nSockets = 2;
+    int nSockets = 3;
     int net_r_s,res;
 
     for(i = 0; i < SOCKETS_NUMBER; i++){
@@ -550,7 +550,7 @@ int main(int argc, char **argv){
             if(nSockets < SOCKETS_NUMBER){
 
                 if((socket_client = accept(connections[0].fd,NULL,NULL)) != -1){
-                    if(!primario){//MAGIC NUMBER
+                    if(!primario){
                         primario = 1;
                         o_server -> state = 0;
                     }
@@ -566,7 +566,7 @@ int main(int argc, char **argv){
             }
         }
         /* um dos sockets de ligação tem dados para ler */
-        i = STDIN_SOCKET;
+        i = SERVER_SOCKET;
         while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
             if (connections[i].revents & POLLIN) {
                 if(i == STDIN_SOCKET){
