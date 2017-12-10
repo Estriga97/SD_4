@@ -12,7 +12,7 @@
 struct rtables_t *rtables_bind(const char *address_port){
 
     if(address_port == NULL){
-        fprintf(stderr, "Argumentos NULL");
+        fprintf(stderr, "Argumentos NULL \n");
 		return NULL;
     }
 
@@ -28,7 +28,7 @@ struct rtables_t *rtables_bind(const char *address_port){
     rtables -> server = server;
     int result;
     if(read_all(server->socket,(char*)&result, _INT) == -1) {
-		fprintf(stderr, "Erro ao read_all!");
+		fprintf(stderr, "Erro ao read_all! \n");
         free(rtables);
         free(server);
 		return NULL;
@@ -44,12 +44,12 @@ struct rtables_t *rtables_bind(const char *address_port){
 int rtables_unbind(struct rtables_t *rtables){
 
     if(rtables == NULL){
-        fprintf(stderr, "Argumentos NULL");
+        fprintf(stderr, "Argumentos NULL \n");
 		return -1;
     }
 
     if(network_close(rtables -> server)){
-        fprintf(stderr, "Falha a fechar o servidor!");
+        fprintf(stderr, "Falha a fechar o servidor! \n");
         return -1;
     }
 
@@ -64,7 +64,7 @@ int rtables_unbind(struct rtables_t *rtables){
 int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
 
     if(rtables == NULL || key == NULL || value == NULL){
-        fprintf(stderr, "Argumentos NULL");
+        fprintf(stderr, "Argumentos NULL \n");
 		return -1;
     }
     
@@ -75,7 +75,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     }
 
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return -1;
     }
 
@@ -91,7 +91,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     imprimir_resposta(msg_out);
     struct message_t* msg_resposta;
     if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
-        fprintf(stderr, "Erro ao enviar/receber mensagem");
+        fprintf(stderr, "Erro ao enviar/receber mensagem \n");
         return -1;
         
     }
@@ -108,7 +108,7 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     struct message_t* msg_out;
 
     if(rtables == NULL || key == NULL || value == NULL){
-        fprintf(stderr, "Argumentos NULL");
+        fprintf(stderr, "Argumentos NULL \n");
 		return -1;
     }
 
@@ -117,7 +117,7 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
         return -1;
     }
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return -1;
     }
 
@@ -127,7 +127,7 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     if((msg_out -> content.entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL) {
         free(msg_out);
         free(msg_out -> content.entry);
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return -1;
     }
     msg_out -> content.entry -> key = strdup(key);
@@ -136,7 +136,7 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
 
     struct message_t* msg_resposta;
     if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
-        fprintf(stderr, "Erro ao enviar/receber mensagem");
+        fprintf(stderr, "Erro ao enviar/receber mensagem \n");
         return -1;
         
     }
@@ -155,7 +155,7 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
     struct message_t* msg_out;
 
     if(rtables == NULL || key == NULL){
-        fprintf(stderr, "Argumentos NULL");
+        fprintf(stderr, "Argumentos NULL \n");
 		return NULL;
     }
 
@@ -165,7 +165,7 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
     }    
 
     if((msg_out = malloc(sizeof(struct message_t))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return NULL;
     }
 
@@ -177,7 +177,7 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
 
     struct message_t* msg_resposta;
     if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
-            fprintf(stderr, "Erro ao enviar/receber mensagem");
+            fprintf(stderr, "Erro ao enviar/receber mensagem \n");
             return NULL;
     }
     struct data_t* res = data_dup(msg_resposta -> content.data);
@@ -195,7 +195,7 @@ int rtables_size(struct rtables_t *rtables){
     struct message_t* msg_out;
 
     if(rtables == NULL){
-        fprintf(stderr, "Argumentos NULL");
+        fprintf(stderr, "Argumentos NULL \n");
 		return -1;
     }
 
@@ -204,7 +204,7 @@ int rtables_size(struct rtables_t *rtables){
         return -1;
     }
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return -1;
     }
 
@@ -215,7 +215,7 @@ int rtables_size(struct rtables_t *rtables){
 
     struct message_t* msg_resposta;
     if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
-        fprintf(stderr, "Erro ao enviar/receber mensagem");
+        fprintf(stderr, "Erro ao enviar/receber mensagem \n");
         return -1;
         
     }
@@ -233,7 +233,7 @@ int rtables_collisions(struct rtables_t *rtables){
     struct message_t* msg_out;
 
     if(rtables == NULL){
-        fprintf(stderr, "Argumentos NULL");
+        fprintf(stderr, "Argumentos NULL \n");
 		return -1;
     }
     if(rtables-> n_tables <= rtables -> table_num){
@@ -241,7 +241,7 @@ int rtables_collisions(struct rtables_t *rtables){
         return -1;
     }
     if((msg_out = malloc(sizeof(struct message_t))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return -1;
     }
 
@@ -252,7 +252,7 @@ int rtables_collisions(struct rtables_t *rtables){
 
     struct message_t* msg_resposta;
     if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
-        fprintf(stderr, "Erro ao enviar/receber mensagem");
+        fprintf(stderr, "Erro ao enviar/receber mensagem \n");
         return -1;
         
     }
@@ -272,7 +272,7 @@ char **rtables_get_keys(struct rtables_t *rtables) {
     struct message_t* msg_out;
 
     if(rtables == NULL){
-        fprintf(stderr, "Argumentos NULL");
+        fprintf(stderr, "Argumentos NULL \n");
 		return NULL;
     }
     if(rtables-> n_tables<=rtables -> table_num){
@@ -280,7 +280,7 @@ char **rtables_get_keys(struct rtables_t *rtables) {
         return NULL;
     }
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return NULL;
     }
 
@@ -292,7 +292,7 @@ char **rtables_get_keys(struct rtables_t *rtables) {
 
     struct message_t* msg_resposta;
     if((msg_resposta = network_send_receive(rtables-> server, msg_out)) == NULL) {
-            fprintf(stderr, "Erro ao enviar/receber mensagem");
+            fprintf(stderr, "Erro ao enviar/receber mensagem \n");
             return NULL;
     }
     imprimir_resposta(msg_resposta);
@@ -303,7 +303,7 @@ char **rtables_get_keys(struct rtables_t *rtables) {
     }
     char ** keys;
     if((keys = (char**) malloc(sizeof(char**)*(size + 1))) == NULL) {
-        fprintf(stderr, " Erro ao preparar keys");
+        fprintf(stderr, " Erro ao preparar keys \n");
         return NULL;
     }
 
@@ -327,7 +327,7 @@ void rtables_free_keys(char **keys){
         table_free_keys(keys);
     }
     else{
-        fprintf(stderr, "Erro ao libertar key! Keys NULL!");
+        fprintf(stderr, "Erro ao libertar key! Keys NULL! \n");
     }
 }
 
