@@ -242,35 +242,28 @@ int network_close(struct server_t *server){
 	/* Terminar ligação ao servidor */
 	close(server -> socket);
 	free(server -> ip_port_primario);
-    free(server -> ip_port_secundario);
-	free(server);
+	free(server -> ip_port_secundario);
 
 	return 0;
 }
-/*FALTAM IFS*/
+
 
 int switch_server(struct server_t *server){
 	struct server_t *new_server;
 
-	if(server -> server_type){
-		if((new_server = network_connect(server->ip_port_secundario)) == NULL) {
+	if((new_server = network_connect((server)->ip_port_secundario)) == NULL) {
 			fprintf(stderr, "Erro ao conectar ao outro servidor \n");
 			return -1;
 		}
-		
-	}else{
-		if((new_server = network_connect(server->ip_port_primario)) == NULL) {
-			fprintf(stderr, "Erro ao conectar ao outro servidor \n");
-			return -1;
-		}
-	}
-	new_server -> ip_port_secundario = server -> ip_port_secundario;
-	new_server -> ip_port_primario = server -> ip_port_primario;
-	new_server -> server_type = !(server -> server_type);
+	new_server -> ip_port_secundario = strdup(server -> ip_port_primario);
+	new_server -> ip_port_primario =  strdup(server -> ip_port_secundario);
 	
 	network_close(server);
-	server = new_server;
+	server -> ip_port_primario = new_server -> ip_port_primario;
+	server -> ip_port_secundario = new_server -> ip_port_secundario;
+	server -> socket = new_server -> socket;
 
+	free(new_server);
 	return 0;
 	
 }

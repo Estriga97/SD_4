@@ -15,4 +15,6 @@ struct rtables_t{
     int n_tables;
 };
 
+int rtables_num_tab(struct rtables_t *rtables);
+
 #endif

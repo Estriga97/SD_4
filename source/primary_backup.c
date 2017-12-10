@@ -17,7 +17,6 @@ int hello(struct server_t *server) {
             return -1;
     }
     int result;
-    read_all(server->socket,(char*)&result, _INT);//Lixo
     rtables_hello(server);
     return 0;
 }

@@ -8,7 +8,9 @@
 #define OC_SZ_TABLES 60
 #define OC_ACK 70
 #define OC_IP_PORT 80
+#define OC_NUM_TAB 85
 #define OC_HELLO 90
+
 
 
 

@@ -35,10 +35,10 @@ int main(int argc, char **argv){
 	int condicao = -1;
  	while (condicao){
 
-		printf(">>> "); // Mostrar a prompt para inserção de comando
 
 		if(rtables == NULL){
 			int tentativas = 0;
+			int server_type = 0; //= secundario 1 primario
 			//tentar as conecçoes ao servidor principal seguido do servidor secundario
 			do {
 				if(tentativas > 0){
@@ -51,7 +51,7 @@ int main(int argc, char **argv){
 						rtables=NULL;
 					}		
 					else{
-						rtables -> server -> server_type = 1;
+						server_type = 1;
 						fprintf(stderr, "Ligado ao servidor principal. \n");					
 					}
 					if(rtables==NULL){
@@ -61,7 +61,7 @@ int main(int argc, char **argv){
 						rtables=NULL;
 					}
 					else{
-						rtables -> server -> server_type = 0;
+						server_type = 0;
 						fprintf(stderr, "Ligado ao servidor secundario. \n");
 					}
 					tentativas++;
@@ -73,10 +73,16 @@ int main(int argc, char **argv){
 				fprintf(stderr, "Nenhum servidor online \n");
 				return -1;
 			}
-
-			rtables -> server -> ip_port_primario = strdup(argv[1]);
-			rtables -> server -> ip_port_secundario = strdup(argv[2]);
+			if(server_type){
+				rtables -> server -> ip_port_primario = strdup(argv[1]);
+				rtables -> server -> ip_port_secundario = strdup(argv[2]);
+			}
+			else{
+				rtables -> server -> ip_port_primario = strdup(argv[2]);
+				rtables -> server -> ip_port_secundario = strdup(argv[1]);
+			}
 		}
+		printf(">>> "); // Mostrar a prompt para inserção de comando
 		
 		/* Receber o comando introduzido pelo utilizador
 		   Sugestão: usar fgets de stdio.h
