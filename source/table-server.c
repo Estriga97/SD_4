@@ -30,6 +30,21 @@ int file_exist(const char* fl_nm) {
     }
 }
 
+///////////////////////////////////  file_create  /////////////////////////////////////////////////////////
+
+int file_create(char * file_path) {
+    FILE* fd;
+    if((fd = fopen(file_path,"w")) == NULL) { // essensial!
+        fprintf(stderr, "Erro ao criar ficheiro \n");
+        return -1;
+    }
+    fprintf(fd,"%s", o_server -> ip_port);
+    fclose(fd);
+
+    return 0;
+
+}
+
 ///////////////////////////////////  file_remove  /////////////////////////////////////////////////////////
 
 void file_remove() {
@@ -375,20 +390,13 @@ int main(int argc, char **argv){
             return -1;
         }
 
-
-        FILE* fd;
         // criar ficheiro no primario
-        if((fd = fopen(FILE_PATH_1,"w")) == NULL) { // essensial!
-            fprintf(stderr, "Erro ao criar ficheiro \n");
-            free(ack);
+        if(file_create(FILE_PATH_1) == -1) {
             free(o_server);
-            free(o_server -> ip_port);
-            return -1;
+            free(ack);
+            return -1; 
         }
-        fprintf(fd,"%s", o_server -> ip_port);
-        fclose(fd);
-
-
+    
         if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) { // essensial!
             fprintf(stderr, "Erro ao preparar lista_tabelas! \n");
             free(o_server);
@@ -462,13 +470,11 @@ int main(int argc, char **argv){
                 }
             }
             // criar ficheiro no secundario sobre o primario
-            FILE* fd;
-            if((fd = fopen(FILE_PATH_2,"w")) == NULL) { // essensial!
-                fprintf(stderr, "Erro ao criar ficheiro \n");
-                return -1;
-            }
-            fprintf(fd,"%s", o_server -> ip_port);
-            fclose(fd);
+        if(file_create(FILE_PATH_2) == -1) {
+            free(o_server);
+            free(ack);
+            return -1; 
+        }
             
         }
 
