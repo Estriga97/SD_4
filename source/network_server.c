@@ -72,7 +72,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	int size;
 
 	while((result = read_all(server->socket,(char*) &size, _INT) ) == -1 && i!= 1){
-		//sleep(5); ?????? TODO!!
+		sleep(5);
 		i++;
 	 }
 	 i = 0;

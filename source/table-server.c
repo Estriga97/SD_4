@@ -352,6 +352,11 @@ int main(int argc, char **argv){
     o_server -> ip_port = NULL;
     o_server -> socket = -1;
 
+    if(argc == 1) {
+        prt_wrong_args();
+        return -1;
+    }
+
     if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) { // essensial!
         printf("Erro ao criar servidor! \n");
         free(ack);
@@ -487,11 +492,6 @@ int main(int argc, char **argv){
             }
         }
 
-        else { // má introdução de argumentos
-            prt_wrong_args();
-            return -1;
-        }
-
         if((fgets(buff_read, MAX_READ, fd)) == NULL) {
             fprintf(stderr, "Erro no acesso ao ficheiro \n"); // essencial
             return -1;
@@ -511,12 +511,6 @@ int main(int argc, char **argv){
             }
         }
 
-////////////////////////////////////////////////////////////////
-
-    else { // má introdução de argumentos
-        prt_wrong_args();
-        return -1;
-    }
 
 //////////////////////// main de ambos (aqui começa a ação) ///////////////////////////////////
 
@@ -525,7 +519,7 @@ int main(int argc, char **argv){
 
     struct pollfd connections[SOCKETS_NUMBER];
     int num_tables = htonl(argc-3);
-    int nSockets = 3;
+    int nSockets = 2;
     int net_r_s,res;
 
     for(i = 0; i < SOCKETS_NUMBER; i++){
@@ -535,6 +529,8 @@ int main(int argc, char **argv){
     }
     connections[LISTENING_SOCKET].fd = listening_socket;
     connections[LISTENING_SOCKET].events = POLLIN;
+    connections[SERVER_SOCKET].fd = o_server->socket;
+    connections[SERVER_SOCKET].events = POLLIN;
     connections[STDIN_SOCKET].fd = fileno(stdin);
     connections[STDIN_SOCKET].events = POLLIN;
     
@@ -554,19 +550,23 @@ int main(int argc, char **argv){
             if(nSockets < SOCKETS_NUMBER){
 
                 if((socket_client = accept(connections[0].fd,NULL,NULL)) != -1){
-  
+                    if(!primario){//MAGIC NUMBER
+                        primario = 1;
+                        o_server -> state = 0;
+                    }
                     printf(" * Client is connected! \n");
                     connections[nSockets].fd = socket_client;
                     connections[nSockets].events = POLLIN;
                     res = write_all(socket_client, (char *) &num_tables, _INT);
-                    nSockets++;}
+                    nSockets++;
+                }
                 else {
                     fprintf(stderr, "Erro ao aceitar client \n");
                 }
             }
         }
         /* um dos sockets de ligação tem dados para ler */
-        i = 0;
+        i = STDIN_SOCKET;
         while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
             if (connections[i].revents & POLLIN) {
                 if(i == STDIN_SOCKET){
@@ -588,12 +588,6 @@ int main(int argc, char **argv){
                 }
                 else{
                     *ack = 0;
-                    //printf("____%d____" ,o_server -> state);
-                    fflush(stdout);
-                    if(!primario && i!=1){//MAGIC NUMBER
-                        primario = 1;
-                        o_server -> state = 0;
-                        }
                     //printf("____%d____",o_server -> state);  
                     if((net_r_s = network_receive_send(connections[i].fd, o_server -> state?ack:NULL)) == -1){
                         close(connections[i].fd);
