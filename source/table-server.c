@@ -417,8 +417,10 @@ int main(int argc, char **argv){
             free(o_server -> ip_port);
             return -1;
         }
-        if(server_connect(o_server) < 0)
+        if(server_connect(o_server) < 0) {
+            fprintf(stderr, "Secundario esta down \n");
             o_server -> state = 0;
+        }
         else {
             o_server -> state = 1;
             int s=strlen(o_server->ip_port);
