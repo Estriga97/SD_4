@@ -6,7 +6,11 @@
                 "type": "cppdbg",
                 "request": "launch",
                 "program": "${workspaceRoot}/binary/server",
+<<<<<<< HEAD
                 "args": ["54321"], 
+=======
+                "args": ["54322"], 
+>>>>>>> ca654ba1abacd804315ac08724b53427d6079d9f
                 "stopAtEntry": false,
                 "cwd": "${workspaceRoot}",
                 "environment": [],

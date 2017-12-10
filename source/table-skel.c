@@ -271,21 +271,27 @@ struct entry_t* get_tbl_keys(int n) {
         }
         table_init = tbl_res;
         int i;
-        for(i = tbl -> datasize - 1; i >= 0 && tbl -> entrys[i].key!=NULL ; i--) {
-            if((entry_aux = entry_dup(&(tbl -> entrys[i]))) == NULL) {
-                while(i < (tbl -> filled)) {
-                    free(tbl_res);
-                    tbl_res--;
-                    i++;
-                }
-                free(table_init);
-                return NULL;
-            }
-            memcpy(tbl_res,entry_aux,sizeof(struct entry_t));
-            tbl_res++;
+        for(i = tbl -> datasize-1; i >= 0; i--) {
+            entry_aux = &(tbl -> entrys[i]);
         }
-        tbl_res++;
-        tbl_res -> key = NULL;
+
+        for(i = tbl -> datasize-1; i >= 0; i--) {
+            if((tbl -> entrys[i]).key!= NULL){
+                if((entry_aux = (&(tbl -> entrys[i]))) == NULL) {
+                    while(i < (tbl -> filled)) {
+                        free(tbl_res);
+                        tbl_res--;
+                        i++;
+                    }
+                    free(table_init);
+                    return NULL;
+                }
+                (*tbl_res).key = strdup(entry_aux ->key);
+                (*tbl_res).value = data_dup(entry_aux->value);
+                tbl_res++;
+                }
+        }
+        (*tbl_res).key = NULL;
         return table_init;
     }
 

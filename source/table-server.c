@@ -212,31 +212,6 @@ int network_receive_send(int sockfd, int* ack){
          if(msg_resposta -> opcode == (OC_ACK + 1)) {
             *ack = 1;
          }
-         if(msg_resposta -> opcode == (OC_HELLO + 1)) {
-            o_server -> socket = sockfd;
-            int i;
-            if((rtables_sz_tbles(o_server,lista_tabelas,size_lista_tabelas)) == -1) {
-                    o_server -> state = 0;
-                }
-            for(i = 0 ; i < nTables;i++){
-                struct entry_t* lista_entrys;
-                if((lista_entrys = get_tbl_keys(i)) == NULL) {
-                    fprintf(stderr, "Erro ao receber keys das tables");
-                    return -1;
-                }
-                while(lista_entrys -> key != NULL){
-                    if(rtables_put(o_server,i, (*lista_entrys).key, (*lista_entrys).value) == -1) {
-                        fprintf(stderr, "Erro ao fazer put");
-                        return -1;
-                    }
-                    lista_entrys++;
-                }
-                if(rtables_ack(o_server) == -1) {
-                    fprintf(stderr, "Erro ao receber ack");
-                    return -1;
-                }
-            }
-        }
     }
     else{
         int* r;
@@ -246,7 +221,7 @@ int network_receive_send(int sockfd, int* ack){
             return -1;
         }
         
-        if(ack != NULL && msg_resposta->opcode != 99){
+        if(primario && ack != NULL && msg_resposta->opcode != 99){
             pthread_t nova;
             struct thread_param_t pthread_p;
             pthread_p.msg = msg_pedido;
@@ -311,6 +286,32 @@ int network_receive_send(int sockfd, int* ack){
         fprintf(stderr, "Erro no envio \n");
         return -2;
     }
+
+    if(msg_resposta -> opcode == (OC_HELLO + 1)) {
+            o_server -> socket = sockfd;
+            int i;
+            if((rtables_sz_tbles(o_server,lista_tabelas,size_lista_tabelas)) == -1) {
+                    o_server -> state = 0;
+                }
+            for(i = 0 ; i < nTables;i++){
+                struct entry_t* lista_entrys;
+                if((lista_entrys = get_tbl_keys(i)) == NULL) {
+                    fprintf(stderr, "Erro ao receber keys das tables");
+                    return -1;
+                }
+                while((*lista_entrys).key != NULL){
+                    if(rtables_put(o_server,i, (*lista_entrys).key, (*lista_entrys).value) == -1) {
+                        fprintf(stderr, "Erro ao fazer put");
+                        return -1;
+                    }
+                    lista_entrys++;
+                }
+                if(rtables_ack(o_server) == -1) {
+                    fprintf(stderr, "Erro ao receber ack");
+                    return -1;
+                }
+            }
+        }
 
 	/* Libertar memória */
     free_message(msg_pedido);
