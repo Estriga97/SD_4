@@ -22,6 +22,7 @@
 #define MAX_READ 81
 #define FILE_PATH_1 "ip_1"
 #define FILE_PATH_2 "ip_2"
+#define IP "127.0.0.1"
 
 struct thread_param_t {
 	struct message_t* msg;

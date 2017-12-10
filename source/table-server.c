@@ -389,6 +389,10 @@ int main(int argc, char **argv){
             free(ack);
             return -1;
         }
+        char *porta = strdup(argv[1]);
+        char *ip_porta = strdup(IP);
+        strcat(ip_porta,":");
+        strcat(ip_porta,porta);
 
         // criar ficheiro no primario
         if(file_create(FILE_PATH_1) == -1) {
@@ -437,7 +441,7 @@ int main(int argc, char **argv){
         else {
             o_server -> state = 1;
             int s=strlen(o_server->ip_port);
-            if(rtables_ip_port(o_server,o_server->ip_port, s)==-1){
+            if(rtables_ip_port(o_server,ip_porta, s)==-1){
                 o_server -> state = 0;
             }else{
                 if((rtables_sz_tbles(o_server,lista_tabelas,argc-3)) == -1) {
