@@ -35,7 +35,7 @@ int file_exist(const char* fl_nm) {
 void shift(struct pollfd* connects, int i) {
     
     if(connects == NULL || i < 0){
-        fprintf(stderr, "Argumentos invalidos!");
+        fprintf(stderr, "Argumentos invalidos! \n");
     }
 
     int fd;
@@ -77,7 +77,7 @@ int make_server_socket(short port){
     struct sockaddr_in server;
 
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
-        fprintf(stderr, "Erro ao criar socket");
+        fprintf(stderr, "Erro ao criar socket \n");
         return -1;
     }
 
@@ -87,17 +87,17 @@ int make_server_socket(short port){
 
     int sim = 1;
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
-        perror("Erro no setsockopt");
+        perror("Erro no setsockopt \n");
     }
 
     if (bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
-        fprintf(stderr, "Erro ao fazer bind!");
+        fprintf(stderr, "Erro ao fazer bind! \n");
         close(socket_fd);
         return -1;
     }
 
     if (listen(socket_fd, 0) < 0){
-        fprintf(stderr, "Erro ao executar listen");
+        fprintf(stderr, "Erro ao executar listen \n");
         close(socket_fd);
         return -1;
     }
@@ -123,7 +123,7 @@ int network_receive_send(int sockfd, int* ack){
 
     /* Verificar parâmetros de entrada */
     if(sockfd == -1) {
-        fprintf(stderr, "Erro no socket recebido!");
+        fprintf(stderr, "Erro no socket recebido! \n");
         return -2;
     }
 
@@ -140,7 +140,7 @@ int network_receive_send(int sockfd, int* ack){
     /* Verificar se a receção teve sucesso */
     if(result <= 0) {
         if(result != 0)
-            fprintf(stderr, "Erro no tamanho da mensagem!");
+            fprintf(stderr, "Erro no tamanho da mensagem! \n");
         return -1;
     }
 
@@ -149,7 +149,7 @@ int network_receive_send(int sockfd, int* ack){
  
     msg_length = ntohl(msg_size);     
     if((message_pedido = malloc(msg_length)) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria para a mensagem pedido!");
+        fprintf(stderr, "Erro ao alocar memoria para a mensagem pedido! \n");
         return -2;
     }
     
@@ -159,7 +159,7 @@ int network_receive_send(int sockfd, int* ack){
     /* Verificar se a receção teve sucesso */
     if(result == -1) {
         free(message_pedido);
-        fprintf(stderr, "Erro na receção da mensagem resposta!");
+        fprintf(stderr, "Erro na receção da mensagem resposta! \n");
         return -1;
     }
 
@@ -170,7 +170,7 @@ int network_receive_send(int sockfd, int* ack){
     if(msg_pedido == NULL) {
         free(message_pedido);
         free_message(msg_pedido);
-        fprintf(stderr, "Erro na desserialização!");
+        fprintf(stderr, "Erro na desserialização! \n");
         return -2;
     }
 
@@ -206,18 +206,18 @@ int network_receive_send(int sockfd, int* ack){
         
         int* r;
         if((r = (int*) malloc(sizeof(int))) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria");
+            fprintf(stderr, "Erro ao alocar memoria \n");
         }
         pthread_p.msg = msg_pedido;
         pthread_p.server = o_server;
         pthread_p.table_num = nTables;
 
         if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
-		    fprintf(stderr, "Thread não criada.");
+		    fprintf(stderr, "Thread não criada. \n");
         }
 
         if (pthread_join(nova, (void **) &r) != 0){
-		    fprintf(stderr, "Erro no join.");
+		    fprintf(stderr, "Erro no join. \n");
         }
         if(*r != 0) {
             *ack = 1;
@@ -236,7 +236,7 @@ int network_receive_send(int sockfd, int* ack){
         free(message_pedido);
         free_message(msg_pedido);
         free_message(msg_resposta);
-        fprintf(stderr, "Erro na serialização!");
+        fprintf(stderr, "Erro na serialização! \n");
         return -2;
     }
 
@@ -255,7 +255,7 @@ int network_receive_send(int sockfd, int* ack){
         free_message(msg_pedido);
         free_message(msg_resposta);
         free(message_resposta);
-        fprintf(stderr, "Erro no envio");
+        fprintf(stderr, "Erro no envio \n");
         return -2;
     }
 
@@ -268,7 +268,7 @@ int network_receive_send(int sockfd, int* ack){
         free_message(msg_pedido);
         free_message(msg_resposta);
         free(message_resposta);
-        fprintf(stderr, "Erro no envio");
+        fprintf(stderr, "Erro no envio \n");
         return -2;
     }
 
@@ -290,19 +290,19 @@ void* pthread_main(void* params) {
     int* res;
   
     if((res = (int*) malloc(sizeof(int))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
         return NULL;
     }
     switch (msg_pedido -> opcode) {
         case OC_PUT:
             if(rtables_put(tp -> server,msg_pedido ->table_num, msg_pedido -> content.entry->key, msg_pedido -> content.entry->value) == -1) {
-                fprintf(stderr, "Erro do secundario ao fazer o put");
+                fprintf(stderr, "Erro do secundario ao fazer o put \n");
                 return NULL;
             }
         break;
         case OC_UPDATE:
             if(rtables_update(tp -> server,tp->table_num, msg_pedido -> content.entry->key, msg_pedido -> content.entry->value) == -1) {
-                fprintf(stderr, "Erro do secundario ao fazer o update");
+                fprintf(stderr, "Erro do secundario ao fazer o update \n");
                 return NULL;
             }
         break;
@@ -324,10 +324,10 @@ int main(int argc, char **argv){
     int* ack;
 
     if((ack = (int*) malloc(sizeof(int))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria");
+        fprintf(stderr, "Erro ao alocar memoria \n");
     }
     if((o_server = (struct server_t*) malloc(sizeof(struct server_t))) == NULL) { // essensial!
-        fprintf(stderr, "Erro ao preparar o_server!");
+        fprintf(stderr, "Erro ao preparar o_server! \n");
         free(ack);
         return -1;
     }
@@ -336,7 +336,7 @@ int main(int argc, char **argv){
     o_server -> socket = -1;
 
     if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) { // essensial!
-        printf("Erro ao criar servidor!");
+        printf("Erro ao criar servidor! \n");
         free(ack);
         return -1;
     }
@@ -344,7 +344,7 @@ int main(int argc, char **argv){
         primario = 1;
 
         if((o_server -> ip_port = strdup(argv[2])) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria");
+            fprintf(stderr, "Erro ao alocar memoria \n");
             free(o_server);
             free(ack);
             return -1;
@@ -354,7 +354,7 @@ int main(int argc, char **argv){
         FILE* fd;
         // criar ficheiro no primario
         if((fd = fopen(FILE_PATH_1,"w")) == NULL) { // essensial!
-            fprintf(stderr, "Erro ao criar ficheiro");
+            fprintf(stderr, "Erro ao criar ficheiro \n");
             free(ack);
             free(o_server);
             free(o_server -> ip_port);
@@ -365,7 +365,7 @@ int main(int argc, char **argv){
 
 
         if((lista_tabelas = (char**) malloc(sizeof(char**)*(argc-1))) == NULL) { // essensial!
-            fprintf(stderr, "Erro ao preparar lista_tabelas!");
+            fprintf(stderr, "Erro ao preparar lista_tabelas! \n");
             free(o_server);
             free(ack);
             free(o_server -> ip_port);
@@ -380,7 +380,7 @@ int main(int argc, char **argv){
                 }
                 free(o_server);
                 free(ack);
-                fprintf(stderr, "Erro ao preparar lista_tabelas[i-2]!");
+                fprintf(stderr, "Erro ao preparar lista_tabelas[i-2]! \n");
                 free(o_server);
                 free(o_server -> ip_port);
                 return -1;
@@ -391,7 +391,7 @@ int main(int argc, char **argv){
         lista_tabelas[argc-3] = NULL; 
         
         if((table_skel_init(lista_tabelas)) == -1) { // essensial!
-            fprintf(stderr, "Erro ao criar tabelas");
+            fprintf(stderr, "Erro ao criar tabelas \n");
             free(ack);
             free(o_server);
             free(o_server -> ip_port);
@@ -426,7 +426,7 @@ int main(int argc, char **argv){
 
             while(!*ack) {
                 if((network_receive_send(o_server -> socket, ack)) < 0){//servidor secundario sem tabelas
-                    fprintf(stderr, "Erro ao atualizar tabelas!");
+                    fprintf(stderr, "Erro ao atualizar tabelas! \n");
                     free(o_server -> ip_port);
                     free(o_server);
                     free(ack);
@@ -437,7 +437,7 @@ int main(int argc, char **argv){
             // criar ficheiro no secundario sobre o primario
             FILE* fd;
             if((fd = fopen(FILE_PATH_2,"w")) == NULL) { // essensial!
-                fprintf(stderr, "Erro ao criar ficheiro");
+                fprintf(stderr, "Erro ao criar ficheiro \n");
                 return -1;
             }
             fprintf(fd,"%s", o_server -> ip_port);
@@ -454,13 +454,13 @@ int main(int argc, char **argv){
         char buff_read [MAX_READ];
         if(argc  > 2) {
             if((fd = fopen(FILE_PATH_1,"r")) == NULL) { // essensial!
-                fprintf(stderr, "Erro ao encontrar ficheiro");
+                fprintf(stderr, "Erro ao encontrar ficheiro \n");
                 return -1;
             }
         }
         else if(argc == 2){
             if((fd = fopen(FILE_PATH_2,"r")) == NULL) { // essensial!
-                fprintf(stderr, "Erro ao encontrar ficheiro");
+                fprintf(stderr, "Erro ao encontrar ficheiro \n");
                 return -1;
             }
         }
@@ -471,7 +471,7 @@ int main(int argc, char **argv){
         }
 
         if((fgets(buff_read, MAX_READ, fd)) == NULL) {
-            fprintf(stderr, "Erro no acesso ao ficheiro"); // essencial
+            fprintf(stderr, "Erro no acesso ao ficheiro \n"); // essencial
             return -1;
         }
 
@@ -533,13 +533,13 @@ int main(int argc, char **argv){
 
                 if((socket_client = accept(connections[0].fd,NULL,NULL)) != -1){
   
-                    printf(" * Client is connected!\n");
+                    printf(" * Client is connected! \n");
                     connections[nSockets].fd = socket_client;
                     connections[nSockets].events = POLLIN;
                     res = write_all(socket_client, (char *) &num_tables, _INT);
                     nSockets++;}
                 else {
-                    fprintf(stderr, "Erro ao aceitar client");
+                    fprintf(stderr, "Erro ao aceitar client \n");
                 }
             }
     }
@@ -580,10 +580,10 @@ int main(int argc, char **argv){
                         connections[i].revents = 0;
                         shift(connections,i);
                         nSockets--;
-                        printf(" * Client is disconnected!\n");
+                        printf(" * Client is disconnected! \n");
                     }
                     else if(net_r_s == -2){
-                        fprintf(stderr, "Operação falhou"); //*
+                        fprintf(stderr, "Operação falhou \n"); //*
                     }
                     if(*ack != 0) {
                         o_server -> state = 0;//esta
@@ -599,7 +599,7 @@ int main(int argc, char **argv){
             connections[i].revents = 0;
             shift(connections,i);
             nSockets--;
-            printf(" * Client is disconnected!\n");
+            printf(" * Client is disconnected! \n");
             }
             i++;
         }

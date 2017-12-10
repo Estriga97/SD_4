@@ -43,35 +43,35 @@ int main(int argc, char **argv){
 			//tentar as conecçoes ao servidor principal seguido do servidor secundario
 			do {
 				if(tentativas > 0){
-					fprintf(stderr, "Tentar ligaçao outra vez!");
+					fprintf(stderr, "Tentar ligaçao outra vez! \n");
 					sleep(RETRY_TIME);
 				}
 					/* Usar network_connect para estabelcer ligação ao servidor principal */
 					if((rtables = rtables_bind(argv[1])) == NULL){
-						fprintf(stderr, "Erro a estabelecer ligaçao ao servidor principal!");
+						fprintf(stderr, "Erro a estabelecer ligaçao ao servidor principal! \n");
 						rtables=NULL;
 					}		
 					else{
 						rtables -> server -> server_type = 1;
-						fprintf(stderr, "Ligado ao servidor principal.");
+						fprintf(stderr, "Ligado ao servidor principal. \n");
 					
 					}
 					if(rtables==NULL){
 					/* Usar network_connect para estabelcer ligação ao servidor secundario */
 					if((rtables = rtables_bind(argv[2])) == NULL){
-						fprintf(stderr, "Erro a estabelecer ligaçao ao servidor secundario!");
+						fprintf(stderr, "Erro a estabelecer ligaçao ao servidor secundario! \n");
 						rtables=NULL;
 					}
 					else{
 						rtables -> server -> server_type = 0;
-						fprintf(stderr, "Ligado ao servidor secundario.");
+						fprintf(stderr, "Ligado ao servidor secundario. \n");
 					}
 					tentativas++;}
 			}
 			while(tentativas < MAX_TENTATIVA && rtables == NULL );
 
 			if(rtables == NULL) {
-				fprintf(stderr, "Nenhum servidor online");
+				fprintf(stderr, "Nenhum servidor online \n");
 				return -1;
 			}
 
@@ -116,14 +116,14 @@ int main(int argc, char **argv){
 				char* key = strdup(strtok(NULL, spliters));
                 struct data_t* value;
 				if((value = (struct data_t*) malloc(sizeof(struct data_t))) == NULL) {
-					fprintf(stderr, "Erro ao alocar memoria no put!");
+					fprintf(stderr, "Erro ao alocar memoria no put! \n");
 					free(key);
 					free(rtables);
 					return -1;
 				}
 				char* data= strtok(NULL, spliters);
 				if((value -> data = malloc(strlen(data))) == NULL) {
-					fprintf(stderr, "Erro ao alocar memoria no put!");
+					fprintf(stderr, "Erro ao alocar memoria no put! \n");
 					free(key);
 					free(value);
 					free(rtables);
@@ -133,7 +133,7 @@ int main(int argc, char **argv){
 				value -> datasize = strlen(data);
 
 				if(rtables_put(rtables, key,value) == -1){
-					fprintf(stderr, "Erro no commando put!");
+					fprintf(stderr, "Erro no commando put! \n");
 					rtables_unbind(rtables);
 				}
 				else{
@@ -151,7 +151,7 @@ int main(int argc, char **argv){
 				if(!strcmp((key_aux = strtok(NULL, spliters)),"*")){
 					char** keys = rtables_get_keys(rtables);
 					if(keys == NULL){
-						fprintf(stderr, "Erro no commando get!");
+						fprintf(stderr, "Erro no commando get! \n");
 						rtables_unbind(rtables);
 					}
 					else{
@@ -163,7 +163,7 @@ int main(int argc, char **argv){
 					key = strdup(key_aux);
 					struct data_t* datatemp = rtables_get(rtables, key);
 					if(datatemp == NULL){
-						fprintf(stderr, "Erro no commando get!");
+						fprintf(stderr, "Erro no commando get! \n");
 						rtables_unbind(rtables);
 					}
 					else{
@@ -181,14 +181,14 @@ int main(int argc, char **argv){
               
                 struct data_t* value;
 				if((value = (struct data_t*) malloc(sizeof(struct data_t))) == NULL) {
-					fprintf(stderr, "Erro ao alocar memoria no update!");
+					fprintf(stderr, "Erro ao alocar memoria no update! \n");
 					free(key);
 					free(rtables);
 					return -1;
 				}
 				char* data= strtok(NULL, spliters);
 				if((value -> data = malloc(strlen(data))) == NULL) {
-					fprintf(stderr, "Erro ao alocar memoria no update!");
+					fprintf(stderr, "Erro ao alocar memoria no update! \n");
 					free(key);
 					free(value);
 					free(rtables);
@@ -198,7 +198,7 @@ int main(int argc, char **argv){
 				value -> datasize = strlen(data);
 
 				if(rtables_update(rtables, key,value) == -1){
-					fprintf(stderr, "Erro no commando uptade!");
+					fprintf(stderr, "Erro no commando uptade! \n");
 					rtables_unbind(rtables);
 				}
 				else{
@@ -212,7 +212,7 @@ int main(int argc, char **argv){
 				rtables->table_num = atoi(strtok(NULL, spliters));
 
 				if(rtables_size(rtables) == -1){
-					fprintf(stderr, "Erro no commando size!");
+					fprintf(stderr, "Erro no commando size! \n");
 					rtables_unbind(rtables);
 				}
 				
@@ -221,13 +221,13 @@ int main(int argc, char **argv){
 			else if(!strcasecmp(comando, "collisions")){
 				rtables->table_num = atoi(strtok(NULL, spliters));
 				if(rtables_collisions(rtables)==-1){
-					fprintf(stderr, "Erro no commando collisions!");
+					fprintf(stderr, "Erro no commando collisions! \n");
 					rtables_unbind(rtables);
 				}
 			}
 			
 			else{
-				printf("Comando errado!\n");				
+				printf("Comando errado! \n");				
 
 			}		
 		}
