@@ -28,7 +28,7 @@ int hello(struct server_t *server) {
 int update_state(struct server_t *server) {
     int res;
     if(hello(server) == -1 ){
-
+        
     }
     int* ack;
         if((ack = (int*) malloc(sizeof(int))) == NULL) {
