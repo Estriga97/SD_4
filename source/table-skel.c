@@ -21,7 +21,7 @@ int n_tabelas;
 int table_skel_init(char **n_tables){
 
   if(n_tables == NULL){
-    fprintf(stderr, "Argumentos errados!");
+    fprintf(stderr, "Argumentos errados! \n");
     return -1;
   }
 
@@ -32,7 +32,7 @@ int table_skel_init(char **n_tables){
   }
   n_tabelas = size;
   if((tabelas = (struct table_t**) malloc (sizeof(struct table_t**) * size)) == NULL){
-    fprintf(stderr, "Erro ao preparar tabelas");
+    fprintf(stderr, "Erro ao preparar tabelas \n");
     return -1;
   }
   while(i < size) {
@@ -62,12 +62,12 @@ struct message_t *invoke(struct message_t *msg_in){
 
       /* Verificar parâmetros de entrada */
       if(msg_in == NULL){
-        fprintf(stderr, "Argumentos errados!");
+        fprintf(stderr, "Argumentos errados! \n");
         return NULL;
       }
 
       if(msg_in -> table_num >= n_tabelas){
-        fprintf(stderr, "Erro devido a inexistência de Tabela!");
+        fprintf(stderr, "Erro devido a inexistência de Tabela! \n");
         return messgerror();
     }
 
@@ -87,13 +87,13 @@ struct message_t *invoke(struct message_t *msg_in){
         case OC_PUT:
     
           if(ctp != CT_ENTRY){
-            fprintf(stderr, "Erro ao pedir put");
+            fprintf(stderr, "Erro ao pedir put \n");
             return messgerror ();
           }
           else {  
             validade = table_put(tabela, msg_in -> content.entry -> key, msg_in -> content.entry -> value);
             if (validade != 0){
-              fprintf(stderr, "Erro ao executar operação pedida (put)");
+              fprintf(stderr, "Erro ao executar operação pedida (put) \n");
               return messgerror ();
             }
           }
@@ -102,7 +102,7 @@ struct message_t *invoke(struct message_t *msg_in){
         case OC_GET:
     
           if(ctp != CT_KEY){
-            fprintf(stderr, "Erro ao pedir get");
+            fprintf(stderr, "Erro ao pedir get \n");
             return messgerror ();
           }
           else {
@@ -115,13 +115,13 @@ struct message_t *invoke(struct message_t *msg_in){
         case OC_UPDATE:
     
         if(ctp != CT_ENTRY){
-          fprintf(stderr, "Erro ao pedir update");
+          fprintf(stderr, "Erro ao pedir update \n");
           return messgerror ();
         }
         else {
           validade = table_update(tabela, msg_in -> content.entry -> key, msg_in -> content.entry -> value);
           if (validade != 0){
-            fprintf(stderr, "Erro ao executar operação pedida (update)");
+            fprintf(stderr, "Erro ao executar operação pedida (update) \n");
             return messgerror ();
           }
         }
@@ -142,7 +142,7 @@ struct message_t *invoke(struct message_t *msg_in){
         /* Preparar mensagem de resposta */
     
       if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t))) == NULL) {
-        fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta");
+        fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta \n");
         return messgerror ();
       }
     
@@ -200,7 +200,7 @@ void get_keys(int n){
         print_tables(tabelas[n]);
     }      
     else{
-        fprintf(stderr, "Tamanho do argumento errado!");
+        fprintf(stderr, "Tamanho do argumento errado! \n");
     }
 }   
 

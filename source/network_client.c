@@ -20,7 +20,7 @@ struct server_t *network_connect(const char *address_port){
 
 	struct server_t *server;
 	if((server = malloc(sizeof(struct server_t))) == NULL) {
-		fprintf(stderr, "Erro ao alocar memoria!");
+		fprintf(stderr, "Erro ao alocar memoria! \n");
 		return NULL;
 	}
 	int sockfd;
@@ -37,7 +37,7 @@ struct server_t *network_connect(const char *address_port){
 	*/
 	struct sockaddr_in* addr;
 	if((addr = malloc(sizeof(struct sockaddr_in))) == NULL) {
-		fprintf(stderr, "Erro ao alocar memoria!");
+		fprintf(stderr, "Erro ao alocar memoria! \n");
 		free(server);
 		return NULL;
 	}
@@ -54,14 +54,14 @@ struct server_t *network_connect(const char *address_port){
 	addr-> sin_port = htons(atoi(strtok(NULL,":")));
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		fprintf(stderr, "Erro ao criar socket TCP!");
+		fprintf(stderr, "Erro ao criar socket TCP! \n");
 		free(server);
 		return NULL;
 	}
 
 	// Estabelece conexão com o servidor definido em server
 	if (connect(sockfd,(struct sockaddr *)addr, sizeof(*addr)) < 0) {
-		fprintf(stderr, "Erro ao conectar-se ao servidor!");
+		fprintf(stderr, "Erro ao conectar-se ao servidor! \n");
 		free(server);
 		close(sockfd);
 		return NULL;
@@ -80,7 +80,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	int tentativas = 0;
 	/* Verificar parâmetros de entrada */
 	if(server == NULL || msg == NULL) {
-		fprintf(stderr, "Erro no contudo recebido (server ou msg)!");
+		fprintf(stderr, "Erro no contudo recebido (server ou msg)! \n");
 		return messgerror ();
 	}
 	
@@ -98,7 +98,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
    
 	/* Verificar se a serialização teve sucesso */
 	if(message_size == -1) {
-		fprintf(stderr, "Erro no tamanho da mensagem!");
+		fprintf(stderr, "Erro no tamanho da mensagem! \n");
 		tentativas++;
 		switch_server(server);
 		continue;}
@@ -114,7 +114,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	 i = 0;
 	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
-		fprintf(stderr, "Erro ao enviar!");
+		fprintf(stderr, "Erro ao enviar! \n");
 		free(message_out);
 		tentativas++;
 		switch_server(server);
@@ -129,7 +129,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	 i = 0;
 	/* Verificar se o envio teve sucesso */
 	if(result == -1) {
-		fprintf(stderr, "Erro ao enviar!");
+		fprintf(stderr, "Erro ao enviar! \n");
 		free(message_out);
 		tentativas++;
 		switch_server(server);
@@ -156,7 +156,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	 i = 0;
 	
 	if(result == -1) {
-		fprintf(stderr, "Erro ao receber o tamanho da mensagem de resposta!");
+		fprintf(stderr, "Erro ao receber o tamanho da mensagem de resposta! \n");
 		free(message_out);
 		tentativas++;
 		switch_server(server);
@@ -166,7 +166,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	size = ntohl(size);
 	char* buff;
 	if((buff = (char*) malloc(size)) == NULL) {
-		fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta!");
+		fprintf(stderr, "Erro ao alocar memoria para a mensagem de resposta! \n");
 		free(message_out);
 		tentativas++;
 		switch_server(server);
@@ -180,7 +180,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	 i = 0;
 
 	if(result == -1) {
-		fprintf(stderr, "Erro receber a mensagem de resposta!");
+		fprintf(stderr, "Erro receber a mensagem de resposta! \n");
 		free(message_out);
 		free(buff);
 		tentativas++;
@@ -193,7 +193,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 
 	/* Verificar se a desserialização teve sucesso */
 	if(msg_resposta == NULL) {
-		fprintf(stderr, "Erro na desserialização!");
+		fprintf(stderr, "Erro na desserialização! \n");
 		free(message_out);
 		free_message(msg_resposta);
 		free(buff);
@@ -218,7 +218,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 int network_close(struct server_t *server){
 	/* Verificar parâmetros de entrada */
 	if(server == NULL) {
-		fprintf(stderr, "Erro no close!");
+		fprintf(stderr, "Erro no close! \n");
 		return -1;
 	}
 
