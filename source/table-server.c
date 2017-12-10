@@ -604,9 +604,14 @@ int main(int argc, char **argv){
                         connections[i].fd = -1;
                         connections[i].events = 0;
                         connections[i].revents = 0;
-                        shift(connections,i);
-                        nSockets--;
-                        printf(" * Client is disconnected! \n");
+                        if(i != SERVER_SOCKET) {
+                            shift(connections,i);
+                            nSockets--;
+                            printf(" * Client is disconnected! \n");
+                        }
+                        else {
+                            printf(" * Other Server is disconnected! \n");
+                        }
                     }
                     else if(net_r_s == -2){
                         fprintf(stderr, "Operação falhou \n"); //*
