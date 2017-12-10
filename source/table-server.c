@@ -224,6 +224,7 @@ int network_receive_send(int sockfd, int* ack){
         }
     }
     else{
+        int* r;
         if((msg_resposta = invoke(msg_pedido)) == NULL) {
             free(message_pedido);
             free_message(msg_pedido);
@@ -231,33 +232,27 @@ int network_receive_send(int sockfd, int* ack){
         }
         
         if(ack != NULL && msg_resposta->opcode != 99){
-        pthread_t nova;
-        struct thread_param_t pthread_p;
-        pthread_p.msg = msg_pedido;
+            pthread_t nova;
+            struct thread_param_t pthread_p;
+            pthread_p.msg = msg_pedido;
+            pthread_p.server = o_server;
+            pthread_p.table_num = nTables;
 
-        
-        int* r;
-        if((r = (int*) malloc(sizeof(int))) == NULL) {
-            fprintf(stderr, "Erro ao alocar memoria \n");
-        }
-        pthread_p.msg = msg_pedido;
-        pthread_p.server = o_server;
-        pthread_p.table_num = nTables;
+            if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
+                fprintf(stderr, "Thread não criada. \n");
+            }
 
-        if (pthread_create(&nova, NULL, &pthread_main, (void *) &pthread_p) != 0){
-		    fprintf(stderr, "Thread não criada. \n");
-        }
+            if (pthread_join(nova, (void **) &r) != 0){
+                fprintf(stderr, "Erro no join. \n");
+            }
 
-        if (pthread_join(nova, (void **) &r) != 0){
-		    fprintf(stderr, "Erro no join. \n");
+            if(*r != 0) {
+                *ack = 1;
+            }
         }
-        if(*r != 0) {
-            *ack = 1;
-        }
-
         free(r);
+    }
 
-    }}
 
     imprimir_resposta(msg_resposta);
 	/* Serializar a mensagem recebida */
@@ -398,6 +393,8 @@ int main(int argc, char **argv){
         if(file_create(FILE_PATH_1) == -1) {
             free(o_server);
             free(ack);
+            free(porta);
+            free(ip_porta);
             return -1; 
         }
     
@@ -405,6 +402,8 @@ int main(int argc, char **argv){
             fprintf(stderr, "Erro ao preparar lista_tabelas! \n");
             free(o_server);
             free(ack);
+            free(porta);
+            free(ip_porta);
             free(o_server -> ip_port);
             return -1;
         }
@@ -420,6 +419,8 @@ int main(int argc, char **argv){
                 fprintf(stderr, "Erro ao preparar lista_tabelas[i-2]! \n");
                 free(o_server);
                 free(o_server -> ip_port);
+                free(porta);
+                free(ip_porta);
                 return -1;
             }
             memcpy(lista_tabelas[i-3],argv[i],strlen(argv[i])+1);
@@ -432,6 +433,8 @@ int main(int argc, char **argv){
             free(ack);
             free(o_server);
             free(o_server -> ip_port);
+            free(porta);
+            free(ip_porta);
             return -1;
         }
         if(server_connect(o_server) < 0) {
@@ -453,7 +456,8 @@ int main(int argc, char **argv){
                 }
             }
         }
-
+        free(porta);
+        free(ip_porta);
     }
 
 ////////////////////////////////////////////////////////////////
