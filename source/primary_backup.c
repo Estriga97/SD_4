@@ -9,24 +9,27 @@
 * já acordou. Retorna 0 em caso de sucesso, -1 em caso de insucesso
 */
 int hello(struct server_t *server) {
-    return server_connect(server);
+    int res;
+    if((res = server_connect(server)) < 0 ) {
+        sleep(5);
+        res = server_connect(server);
+        if(res < 0)
+            return -1;
+    }
+    int result;
+    read_all(server->socket,(char*)&result, _INT);//Lixo
+    rtables_hello(server);
+    return 0;
 }
 
 /* Pede atualizacao de estado ao server.
 * Retorna 0 em caso de sucesso e -1 em caso de insucesso.
 */
 int update_state(struct server_t *server) {
-
     int res;
-    if((res = hello(server)) < 0 ) {
-        sleep(5);
-        res = hello(server);
-        if(res < 0)
-            return -1;
+    if(hello(server) == -1 ){
+
     }
-
-    rtables_hello(server);
-
     int* ack;
         if((ack = (int*) malloc(sizeof(int))) == NULL) {
             //*

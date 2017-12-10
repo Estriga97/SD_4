@@ -184,7 +184,16 @@ int network_receive_send(int sockfd, int* ack){
          }
          if(msg_resposta -> opcode == (OC_HELLO + 1)) {
             o_server ->socket = sockfd;
-         }
+            int i;
+            for(i = 0 ; i < nTables;i++){
+                struct entry_t* lista_entrys = get_tbl_keys(i);
+                while(lista_entrys -> key != NULL){
+                    rtables_put(o_server,i, (*lista_entrys).key, (*lista_entrys).value); // n ha if, TODO
+                    lista_entrys++;
+                }
+                rtables_ack(o_server);
+            }
+        }
     }
     else{
         msg_resposta = invoke(msg_pedido); //*
@@ -523,18 +532,7 @@ int main(int argc, char **argv){
             if(nSockets < SOCKETS_NUMBER){
 
                 if((socket_client = accept(connections[0].fd,NULL,NULL)) != -1){
-                  /*o_server -> socket = socket_client;
-                    if(rtables_sz_tbles(o_server,lista_tabelas,argc-3) == -1) {
-                            o_server -> state = 0;
-                    }
-                    for(i = 0 ; i < nTables;i++){
-                        struct entry_t* lista_entrys = get_tbl_keys(i);
-                        while(lista_entrys -> key != NULL){
-                            rtables_put(o_server,i, (*lista_entrys).key, (*lista_entrys).value); // n ha if, TODO
-                            lista_entrys++;
-                        }
-                    }*/
-                  
+  
                     printf(" * Client is connected!\n");
                     connections[nSockets].fd = socket_client;
                     connections[nSockets].events = POLLIN;
