@@ -11,6 +11,8 @@
 #include "table_server.h"
 
 static int quit = 0;
+char ** lista_tabelas;
+int size_lista_tabelas;
 int nTables;
 static int primario; // 1 = primario, 0 = secundario
 struct server_t* o_server;
@@ -213,6 +215,9 @@ int network_receive_send(int sockfd, int* ack){
          if(msg_resposta -> opcode == (OC_HELLO + 1)) {
             o_server ->socket = sockfd;
             int i;
+            if((rtables_sz_tbles(o_server,lista_tabelas,size_lista_tabelas)) == -1) {
+                    o_server -> state = 0;
+                }
             for(i = 0 ; i < nTables;i++){
                 struct entry_t* lista_entrys;
                 if((lista_entrys = get_tbl_keys(i)) == NULL) {
@@ -340,7 +345,7 @@ void* pthread_main(void* params) {
             }
         break;
         case OC_UPDATE:
-            if(rtables_update(tp -> server,tp->table_num, msg_pedido -> content.entry->key, msg_pedido -> content.entry->value) == -1) {
+            if(rtables_update(tp -> server,msg_pedido->table_num, msg_pedido -> content.entry->key, msg_pedido -> content.entry->value) == -1) {
                 fprintf(stderr, "Erro do secundario ao fazer o update \n");
                 return NULL;
             }
@@ -355,9 +360,7 @@ void* pthread_main(void* params) {
 //////////////////////////////////////// main ////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
-    printf("%s",argv[0]);
-    fflush(stdout);
-    char ** lista_tabelas;
+    size_lista_tabelas = argc-3;//tamanho da lista de tabelas
     int listening_socket,i;
     int fl_exist = (file_exist(FILE_PATH_1) || file_exist(FILE_PATH_2));  //ver se complia
     int* ack;
@@ -516,7 +519,7 @@ int main(int argc, char **argv){
 
         fclose(fd);
     
-        buff_read[strlen(buff_read)-1] = '\0';
+        buff_read[strlen(buff_read)] = '\0';
 
         o_server -> ip_port = strdup(buff_read);
         o_server -> state = 1;
@@ -584,7 +587,7 @@ int main(int argc, char **argv){
         }
         /* um dos sockets de ligação tem dados para ler */
         i = SERVER_SOCKET;
-        while(i < SOCKETS_NUMBER && (connections[i].fd != -1 && !quit)) {
+        while(i < SOCKETS_NUMBER && !quit) {
             if (connections[i].revents & POLLIN) {
                 if(i == STDIN_SOCKET){
                     char input[MAX_READ];
@@ -618,6 +621,7 @@ int main(int argc, char **argv){
                         }
                         else {
                             printf(" * Other Server is disconnected! \n");
+                            o_server -> state = 0;
                         }
                     }
                     else if(net_r_s == -2){
@@ -635,9 +639,11 @@ int main(int argc, char **argv){
                 connections[i].fd = -1;
                 connections[i].events = 0;
                 connections[i].revents = 0;
-                shift(connections,i);
-                nSockets--;
-                printf(" * Client is disconnected! \n");
+                if(i != SERVER_SOCKET) {
+                    shift(connections,i);
+                    nSockets--;
+                    printf(" * Client is disconnected! \n");
+                        }
             }
             i++;
         }
