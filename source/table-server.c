@@ -372,6 +372,8 @@ int main(int argc, char **argv){
 
     o_server -> ip_port = NULL;
     o_server -> socket = -1;
+    o_server -> state = 0;
+    
 
     if(argc == 1) {
         prt_wrong_args();
@@ -546,6 +548,7 @@ int main(int argc, char **argv){
     int num_tables = htonl(argc-3);
     int nSockets = 3;
     int res;
+    int net_r_s;
 
     for(i = 0; i < SOCKETS_NUMBER; i++){
         connections[i].fd = -1;
@@ -592,7 +595,6 @@ int main(int argc, char **argv){
         }
         /* um dos sockets de ligação tem dados para ler */
         i = SERVER_SOCKET;
-        int net_r_s;
         while(i < SOCKETS_NUMBER && !quit) {
             if (connections[i].revents & POLLIN) {
                 if(i == STDIN_SOCKET){
@@ -614,7 +616,7 @@ int main(int argc, char **argv){
                 }
                 else{
                     *ack = 0;
-                    if((net_r_s = network_receive_send(connections[i].fd, o_server -> state?ack:NULL)) == -1){
+                    if((net_r_s = network_receive_send(connections[i].fd, o_server -> state ? ack : NULL)) == -1){
                         close(connections[i].fd);
                         connections[i].fd = -1;
                         connections[i].events = 0;
