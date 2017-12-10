@@ -43,6 +43,7 @@ struct rtables_t *rtables_bind(const char *address_port){
  */
 int rtables_unbind(struct rtables_t *rtables){
 
+
     if(rtables == NULL){
         fprintf(stderr, "Argumentos NULL");
 		return -1;
