@@ -213,7 +213,7 @@ int network_receive_send(int sockfd, int* ack){
             *ack = 1;
          }
          if(msg_resposta -> opcode == (OC_HELLO + 1)) {
-            o_server ->socket = sockfd;
+            o_server -> socket = sockfd;
             int i;
             if((rtables_sz_tbles(o_server,lista_tabelas,size_lista_tabelas)) == -1) {
                     o_server -> state = 0;

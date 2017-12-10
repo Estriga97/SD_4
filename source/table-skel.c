@@ -245,7 +245,7 @@ struct message_t* invoke_server_version(struct message_t* msg_pedido){
             o_server->ip_port = strdup(msg_pedido->content.key);
             break;
         case OC_HELLO:
-            msg_resposta -> opcode = OC_IP_PORT + 1;
+            msg_resposta -> opcode = OC_HELLO + 1;
             msg_resposta -> c_type = CT_RESULT;
             msg_resposta -> table_num = -1;
             msg_resposta -> content.result = 0;
