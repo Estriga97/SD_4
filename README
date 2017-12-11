@@ -2,8 +2,12 @@ O tabel-private.h foi alterado para conter o argumento collisions na table.
 
 Criamos uma message-private com a função msgerrors() e com o opcodde de erro.
 
-O write-all e o read-all estão no mesage.c.
+O write-all e o read-all estão no message.c.
 
 Não foram definidos codigos de erro separados por cada erro.
 
 Para fechar o servidor é necessario que o cliente não esteja a ser atendido(usando o comando quit).
+
+Ficheiros novos: network_server.
+
+Funçoes novas: todas a funçoes do primary_backup_private.h

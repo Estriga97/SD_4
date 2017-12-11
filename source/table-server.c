@@ -12,6 +12,7 @@
 
 static int quit = 0;
 char ** lista_tabelas;
+int size_lista_tabelas;
 int nTables;
 static int primario; // 1 = primario, 0 = secundario
 struct server_t* o_server;
@@ -289,7 +290,7 @@ int network_receive_send(int sockfd, int* ack){
     if(msg_resposta -> opcode == (OC_HELLO + 1)) {
             o_server -> socket = sockfd;
             int i;
-            if((rtables_sz_tbles(o_server,lista_tabelas,nTables)) == -1) {
+            if((rtables_sz_tbles(o_server,lista_tabelas,size_lista_tabelas)) == -1) {
                     o_server -> state = 0;
                 }
             struct entry_t* lista_entrys;
@@ -314,7 +315,7 @@ int network_receive_send(int sockfd, int* ack){
                 free(lista_entrys);
                 return -1;
             }
-            free(lista_entrys);
+            free(lista_entrys); 
             free(lista_entrys);
             
         }
@@ -364,6 +365,7 @@ void* pthread_main(void* params) {
 //////////////////////////////////////// main ////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
+    size_lista_tabelas = argc-3;//tamanho da lista de tabelas
     int listening_socket,i;
     int fl_exist = (file_exist(FILE_PATH_1) || file_exist(FILE_PATH_2));  //ver se complia
     int* ack;
@@ -457,7 +459,6 @@ int main(int argc, char **argv){
             free(ip_porta);
             return -1;
         }
-        nTables = get_n_tabelas();
         if(server_connect(o_server) < 0) {
             fprintf(stderr, "Secundario esta down \n");
             o_server -> state = 0;
@@ -549,10 +550,11 @@ int main(int argc, char **argv){
 
 //////////////////////// main de ambos (aqui começa a ação) ///////////////////////////////////
 
-    nTables = get_n_tabelas();
+    nTables = argc - 3;
     signal(SIGPIPE, SIG_IGN);
 
     struct pollfd connections[SOCKETS_NUMBER];
+    int num_tables = htonl(argc-3);
     int nSockets = 3;
     int res;
     int net_r_s;
@@ -592,7 +594,7 @@ int main(int argc, char **argv){
                     printf(" * Client is connected! \n");
                     connections[nSockets].fd = socket_client;
                     connections[nSockets].events = POLLIN;
-                    res = write_all(socket_client, (char *) &nTables, _INT);
+                    res = write_all(socket_client, (char *) &num_tables, _INT);
                     nSockets++;
                 }
                 else {
